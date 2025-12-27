@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GearGuard • Teams</title>
+
+  <style>
+    :root{
+      --bg:#000;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+
+      --good:#33d17a;
+      --warn:#f5c542;
+      --bad:#ff4d4d;
+      --blue:#7aa7ff;
+      --violet:#c39cff;
+
+      --shadow: 0 22px 55px rgba(0,0,0,.45);
+      --shadow2: 0 12px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(122,167,255,.12), transparent 60%),
+        radial-gradient(1000px 600px at 20% 110%, rgba(195,156,255,.10), transparent 65%),
+        radial-gradient(900px 540px at 120% 40%, rgba(51,209,122,.09), transparent 60%);
+      opacity:.75;
+      z-index:0;
+    }
+    body:after{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.10;
+      z-index:0;
+    }
+    .app{ position:relative; z-index:1; min-height:100%; }
+
+    /* NAVBAR */
+    .topbar{
+      position:sticky; top:0; z-index:60;
+      backdrop-filter: blur(12px);
+      background: rgba(8,10,18,.72);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner{
+      width:min(1260px, calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:220px; }
+    .logo{
+      width:44px;height:44px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 65%),
+        linear-gradient(135deg, rgba(122,167,255,.88), rgba(195,156,255,.78));
+      box-shadow: 0 10px 30px rgba(0,0,0,.38);
+      display:grid; place-items:center;
+      font-weight:900;
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute;
+      inset:9px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.35);
+      opacity:.65;
+    }
+    .brand h1{ margin:0; font-size:15px; letter-spacing:.2px; line-height:1.05; }
+    .brand span{ display:block; font-size:12px; color: var(--muted); margin-top:2px; }
+
+    .nav{
+      display:flex;
+      gap:8px;
+      flex:1;
+      overflow:auto hidden;
+      scrollbar-width:none;
+      padding-bottom:2px;
+    }
+    .nav::-webkit-scrollbar{ display:none; }
+    .tab{
+      appearance:none;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size:13px;
+      padding:9px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: .18s ease;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .tab:hover{
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-color: rgba(255,255,255,.08);
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(195,156,255,.13);
+      border-color: rgba(195,156,255,.30);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25) inset;
+    }
+
+    .actions{ display:flex; align-items:center; gap:10px; justify-content:flex-end; min-width: 340px; }
+    .iconbtn{
+      width:40px;height:40px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .iconbtn:hover{ transform: translateY(-1px); border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      cursor:pointer;
+      user-select:none;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.14);
+    }
+    .pill:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+    .avatar{
+      width:28px;height:28px;
+      border-radius: 12px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.22), transparent 65%),
+        linear-gradient(135deg, rgba(255,77,77,.74), rgba(245,197,66,.62));
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    /* MAIN */
+    .main{
+      width:min(1260px, calc(100% - 32px));
+      margin: 18px auto 40px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .header-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .page-title{ display:flex; gap:12px; }
+    .badge{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .page-title h2{ margin:0; font-size:18px; font-weight:900; }
+    .subtitle{ margin:6px 0 0; color: var(--muted); font-size:12px; }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .input{
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      padding: 0 12px;
+      outline:none;
+      min-width: 260px;
+    }
+    .select{
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      padding: 0 12px;
+      outline:none;
+      cursor:pointer;
+      min-width: 180px;
+    }
+    .btn{
+      height:40px;
+      padding:0 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      transition:.18s ease;
+      font-size:12.8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+    }
+    .btn:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); transform: translateY(-1px); }
+    .btn.primary{ border-color: rgba(195,156,255,.34); background: rgba(195,156,255,.14); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      align-items:start;
+    }
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .card .c-head{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      flex-wrap:wrap;
+    }
+    .card .c-head b{ font-size:13px; }
+    .card .c-body{ padding: 14px 16px; }
+
+    /* KPI tiles */
+    .stat{
+      min-height: 112px;
+      padding: 16px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .stat .left{ display:flex; flex-direction:column; gap:6px; }
+    .stat .title{ font-size:13px; font-weight:900; }
+    .stat .value{ font-size:22px; font-weight:900; line-height:1; }
+    .stat .desc{ font-size:12.3px; color: var(--muted); }
+
+    .stat.blue{ border-color: rgba(122,167,255,.50); }
+    .stat.blue:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(122,167,255,.88); }
+    .stat.violet{ border-color: rgba(195,156,255,.52); }
+    .stat.violet:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(195,156,255,.88); }
+    .stat.warn{ border-color: rgba(245,197,66,.50); }
+    .stat.warn:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(245,197,66,.88); }
+    .stat.red{ border-color: rgba(255,77,77,.50); }
+    .stat.red:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(255,77,77,.88); }
+
+    /* Tags */
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(51,209,122,.26); background: rgba(51,209,122,.10); }
+    .tag.warn{ border-color: rgba(245,197,66,.26); background: rgba(245,197,66,.10); }
+    .tag.bad{ border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10); }
+    .tag.info{ border-color: rgba(195,156,255,.26); background: rgba(195,156,255,.10); }
+
+    /* table */
+    .tableWrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width: 980px;
+    }
+    thead th{
+      text-align:left;
+      font-weight:850;
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.22);
+      background: rgba(255,255,255,.02);
+      white-space:nowrap;
+      user-select:none;
+      cursor:pointer;
+      position:relative;
+    }
+    thead th .sort{
+      position:absolute; right:10px; top:50%;
+      transform:translateY(-50%);
+      opacity:.65; font-size:11px;
+    }
+    tbody td{
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.18);
+      vertical-align:top;
+    }
+    tbody tr{ cursor:pointer; transition:.12s ease; }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
+
+    /* drawer */
+    .drawerBack{ position:fixed; inset:0; background: rgba(0,0,0,.45); display:none; z-index: 140; }
+    .drawerBack.open{ display:block; }
+    .drawer{
+      position:fixed; top:0; right:-560px; height:100%;
+      width:min(560px, 100%);
+      background: rgba(10,12,22,.96);
+      border-left:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      z-index:150;
+      transition:right .22s ease;
+      display:flex; flex-direction:column;
+    }
+    .drawer.open{ right:0; }
+    .drawer .dhead{
+      padding: 14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .drawer .dbody{ padding: 14px 16px; overflow:auto; display:grid; gap:12px; }
+    .drawer .dfoot{
+      padding: 12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 170px 1fr;
+      gap:8px 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .kv .k{ color: var(--muted); font-size:12px; }
+    .kv .v{ font-size:13px; font-weight:750; }
+
+    /* modal */
+    .modalBack{ position:fixed; inset:0; background: rgba(0,0,0,.55); display:none; z-index: 220; }
+    .modalBack.open{ display:block; }
+    .modal{
+      width:min(720px, calc(100% - 28px));
+      margin: 70px auto;
+      background: rgba(10,12,22,.96);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mhead{
+      padding: 14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .modal .mbody{ padding: 14px 16px; display:grid; gap:12px; }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field label{ display:block; font-size:12px; color: var(--muted); margin-bottom:6px; }
+    .field input, .field select, .field textarea{
+      width:100%;
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      padding: 0 12px;
+      outline:none;
+    }
+    .field textarea{ height: 90px; padding: 10px 12px; resize: vertical; }
+    .modal .mfoot{
+      padding: 12px 16px;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      flex-wrap:wrap;
+    }
+
+    /* toast */
+    .toast{
+      position:fixed; right:18px; bottom:18px;
+      width:min(380px, calc(100% - 36px));
+      background: rgba(10,12,22,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      display:none;
+      gap:10px;
+      align-items:flex-start;
+      z-index:300;
+    }
+    .toast.show{ display:flex; }
+    .toast .ticon{
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .toast b{ display:block; font-size:13px; }
+    .toast small{ color: var(--muted); display:block; margin-top:2px; line-height:1.25; }
+    .toast .close{
+      margin-left:auto;
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+    }
+
+    @media (max-width: 820px){
+      .formGrid{ grid-template-columns: 1fr; }
+      .actions{ min-width: auto; }
+    }
+        .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- NAVBAR -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+        <div>
+          <h1>GearGuard</h1>
+          <span>Maintenance Tracker</span>
+        </div>
+      </div>
+
+            <nav class="nav" aria-label="Primary">
+          <a href="{% url 'maintainance' %}" style="text-decoration:none">
+    <button class="tab" data-tab="maintenance">Maintenance</button>
+  </a>
+          <a href="{% url 'dashboard' %}" style="text-decoration:none">
+    <button class="tab" data-tab="dashboard">Dashboard</button>
+  </a>
+           <a href="{% url 'maintenance_calendar' %}" style="text-decoration:none">
+    <button class="tab" data-tab="mainenance_calendar">Maintenance Calendar</button>
+  </a>
+  <a href="{% url 'equipment' %}" style="text-decoration:none">
+    <button class="tab" data-tab="equipment">Equipment</button>
+  </a>
+  <a href="{% url 'reporting' %}" style="text-decoration:none">
+    <button class="tab" data-tab="reporting">Reporting</button>
+  </a>
+  <a href="{% url 'teams' %}" style="text-decoration:none">
+    <button class="tab" data-tab="teams">Teams</button>
+  </a>
+     
+        </nav>
+      <div class="actions">
+        <button class="iconbtn" id="exportBtn" title="Export CSV">⬇️</button>
+        <button class="iconbtn" id="seedBtn" title="Add demo data">➕</button>
+        <div class="pill" title="Current Account">
+          <div class="avatar"></div>
+          <div style="display:flex;flex-direction:column;line-height:1.05">
+            <b style="font-size:12.8px;">jyotier</b>
+            <small style="font-size:11px;color:var(--muted)">Current account</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <div class="header-row">
+      <div class="page-title">
+        <span class="badge">People</span>
+        <div>
+          <h2>Teams</h2>
+          <p class="subtitle">Manage technicians, shifts, workload, and tasks. Fully interactive (frontend).</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input class="input" id="search" placeholder="Search name, email, skill, equipment, role…" />
+        <select class="select" id="roleFilter">
+          <option value="all" selected>All roles</option>
+          <option value="technician">Technician</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="planner">Planner</option>
+        </select>
+        <select class="select" id="shiftFilter">
+          <option value="all" selected>All shifts</option>
+          <option value="day">Day</option>
+          <option value="night">Night</option>
+          <option value="general">General</option>
+        </select>
+        <select class="select" id="statusFilter">
+          <option value="all" selected>All status</option>
+          <option value="on_duty">On duty</option>
+          <option value="off_duty">Off duty</option>
+          <option value="leave">On leave</option>
+        </select>
+        <button class="btn primary" id="addBtn">➕ Add Member</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <section class="grid">
+      <div class="card stat violet" style="grid-column: 1 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(195,156,255,.98);">Total Members</div>
+          <div class="value" id="kTotal">0</div>
+          <div class="desc">active in system</div>
+        </div>
+      </div>
+
+      <div class="card stat blue" style="grid-column: 4 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(122,167,255,.98);">On Duty</div>
+          <div class="value" id="kDuty">0</div>
+          <div class="desc">available now</div>
+        </div>
+      </div>
+
+      <div class="card stat warn" style="grid-column: 7 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(245,197,66,.98);">Pending Tasks</div>
+          <div class="value" id="kPending">0</div>
+          <div class="desc">across all members</div>
+        </div>
+      </div>
+
+      <div class="card stat red" style="grid-column: 10 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(255,77,77,.98);">SLA Breaches</div>
+          <div class="value" id="kSla">0</div>
+          <div class="desc">tasks overdue</div>
+        </div>
+      </div>
+
+      <!-- Members table -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="c-head">
+          <b>Team Members</b>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="btn" style="cursor:default">Showing <b id="showCount" style="margin-left:6px">0</b></span>
+            <button class="btn" id="bulkDutyBtn">⚡ Set all to On Duty</button>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-key="name">Name <span class="sort" id="s-name">↕</span></th>
+                <th data-key="role">Role <span class="sort" id="s-role">↕</span></th>
+                <th data-key="shift">Shift <span class="sort" id="s-shift">↕</span></th>
+                <th data-key="status">Status <span class="sort" id="s-status">↕</span></th>
+                <th data-key="skills">Skills <span class="sort" id="s-skills">↕</span></th>
+                <th data-key="assigned">Open Tasks <span class="sort" id="s-assigned">↕</span></th>
+                <th data-key="lastActive">Last Active <span class="sort" id="s-lastActive">↕</span></th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Drawer -->
+  <div class="drawerBack" id="drawerBack"></div>
+  <aside class="drawer" id="drawer">
+    <div class="dhead">
+      <b id="dTitle">Member</b>
+      <button class="iconbtn" id="closeDrawer">✕</button>
+    </div>
+    <div class="dbody" id="drawerBody"></div>
+    <div class="dfoot">
+      <button class="btn" id="assignTaskBtn">🧾 Assign Task</button>
+      <button class="btn" id="editFromDrawerBtn">✏️ Edit</button>
+      <button class="btn primary" id="toggleDutyBtn">⚡ Toggle Duty</button>
+    </div>
+  </aside>
+
+  <!-- Modal -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal">
+      <div class="mhead">
+        <b id="mTitle">Add Member</b>
+        <button class="iconbtn" id="closeModal">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="formGrid">
+          <div class="field">
+            <label>Name</label>
+            <input id="fName" placeholder="e.g., Vasu Patel" />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input id="fEmail" placeholder="e.g., vasu@company.com" />
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select id="fRole">
+              <option value="technician">Technician</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="planner">Planner</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Shift</label>
+            <select id="fShift">
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="on_duty">On duty</option>
+              <option value="off_duty">Off duty</option>
+              <option value="leave">On leave</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="fPhone" placeholder="+91..." />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Skills (comma separated)</label>
+          <input id="fSkills" placeholder="Hydraulics, Electrical, PLC, Welding" />
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="fNotes" placeholder="Short notes about this member…"></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="btn" id="deleteBtn" style="display:none;border-color:rgba(255,77,77,.3);background:rgba(255,77,77,.12)">🗑 Delete</button>
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Modal -->
+  <div class="modalBack" id="taskBack">
+    <div class="modal">
+      <div class="mhead">
+        <b>Assign Task</b>
+        <button class="iconbtn" id="closeTask">✕</button>
+      </div>
+      <div class="mbody">
+        <div class="formGrid">
+          <div class="field">
+            <label>Title</label>
+            <input id="tTitle" placeholder="e.g., Replace belt on Assembly 1" />
+          </div>
+          <div class="field">
+            <label>Priority</label>
+            <select id="tPrio">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Due in (hours)</label>
+            <input id="tDue" type="number" min="1" value="12" />
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="tStatus">
+              <option value="open" selected>Open</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="tDesc" placeholder="What needs to be done…"></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="btn" id="taskCancel">Cancel</button>
+        <button class="btn primary" id="taskSave">Assign</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="ticon" id="toastIcon">✅</div>
+    <div>
+      <b id="toastTitle">Done</b>
+      <small id="toastMsg">.</small>
+    </div>
+    <button class="close" id="toastClose">✕</button>
+  </div>
+
+</div>
+
+<script>
+  const $ = (q)=>document.querySelector(q);
+  const $$ = (q)=>[...document.querySelectorAll(q)];
+  const escapeHTML = (s)=> String(s??"")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  function toast(title,msg,icon="✅"){
+    $("#toastIcon").textContent=icon;
+    $("#toastTitle").textContent=title;
+    $("#toastMsg").textContent=msg;
+    $("#toast").classList.add("show");
+    clearTimeout(window.__t);
+    window.__t=setTimeout(()=>$("#toast").classList.remove("show"), 2200);
+  }
+  $("#toastClose").addEventListener("click", ()=>$("#toast").classList.remove("show"));
+
+  function nowISO(){ return new Date().toISOString(); }
+  function isoDate(d){ const dt=new Date(d); return dt.toISOString().slice(0,10); }
+  function uid(){ return "m_"+Math.random().toString(16).slice(2)+"_"+Date.now(); }
+
+  /* ====== STORAGE ====== */
+  const KEY="gg_teams_v1";
+  const TASKKEY="gg_tasks_v1";
+
+  function seedMembers(){
+    return [
+      {id:uid(), name:"Vasu", email:"vasu@company.com", role:"technician", shift:"day", status:"on_duty", phone:"+91 90000 11111", skills:["Electrical","PLC","Sensors"], notes:"Good at diagnostics.", lastActive: nowISO()},
+      {id:uid(), name:"Riya", email:"riya@company.com", role:"technician", shift:"general", status:"off_duty", phone:"+91 90000 22222", skills:["Hydraulics","Welding"], notes:"Handles heavy repairs.", lastActive: nowISO()},
+      {id:uid(), name:"Meera", email:"meera@company.com", role:"supervisor", shift:"day", status:"on_duty", phone:"+91 90000 33333", skills:["Planning","SLA","Safety"], notes:"Escalations + approvals.", lastActive: nowISO()},
+      {id:uid(), name:"Jay", email:"jay@company.com", role:"planner", shift:"general", status:"on_duty", phone:"+91 90000 44444", skills:["Scheduling","Inventory"], notes:"Manages PM calendar.", lastActive: nowISO()},
+    ];
+  }
+
+  function seedTasks(members){
+    const m0=members[0]?.id, m1=members[1]?.id;
+    return [
+      {id:uid(), memberId:m0, title:"Replace belt on Assembly 1", prio:"high", status:"open", createdAt:nowISO(), dueAt:new Date(Date.now()+6*3600000).toISOString(), desc:"Check tension and alignment."},
+      {id:uid(), memberId:m0, title:"Sensor alignment - Drill 1", prio:"medium", status:"done", createdAt:nowISO(), dueAt:new Date(Date.now()-2*3600000).toISOString(), desc:"Verified readings."},
+      {id:uid(), memberId:m1, title:"Leak inspection - Compressor", prio:"high", status:"open", createdAt:nowISO(), dueAt:new Date(Date.now()-1*3600000).toISOString(), desc:"Possible seal failure."},
+    ];
+  }
+
+  const state = {
+    members: JSON.parse(localStorage.getItem(KEY)||"null"),
+    tasks: JSON.parse(localStorage.getItem(TASKKEY)||"null"),
+    sort: {key:"name", dir:"asc"},
+    selectedId: null,
+    editId: null
+  };
+
+  if(!state.members){
+    state.members = seedMembers();
+    localStorage.setItem(KEY, JSON.stringify(state.members));
+  }
+  if(!state.tasks){
+    state.tasks = seedTasks(state.members);
+    localStorage.setItem(TASKKEY, JSON.stringify(state.tasks));
+  }
+
+  function saveAll(){
+    localStorage.setItem(KEY, JSON.stringify(state.members));
+    localStorage.setItem(TASKKEY, JSON.stringify(state.tasks));
+  }
+
+  /* ====== UI HELPERS ====== */
+  function roleLabel(r){
+    if(r==="technician") return "Technician";
+    if(r==="supervisor") return "Supervisor";
+    if(r==="planner") return "Planner";
+    return r;
+  }
+  function shiftLabel(s){
+    if(s==="day") return "Day";
+    if(s==="night") return "Night";
+    if(s==="general") return "General";
+    return s;
+  }
+  function statusTag(s){
+    if(s==="on_duty") return `<span class="tag good">On duty</span>`;
+    if(s==="off_duty") return `<span class="tag warn">Off duty</span>`;
+    if(s==="leave") return `<span class="tag bad">On leave</span>`;
+    return `<span class="tag">${escapeHTML(s)}</span>`;
+  }
+  function prioTag(p){
+    if(p==="high") return `<span class="tag bad">High</span>`;
+    if(p==="medium") return `<span class="tag warn">Medium</span>`;
+    if(p==="low") return `<span class="tag good">Low</span>`;
+    return `<span class="tag">${escapeHTML(p)}</span>`;
+  }
+
+  function memberTasks(memberId){
+    return state.tasks.filter(t=>t.memberId===memberId);
+  }
+  function openTasks(memberId){
+    return memberTasks(memberId).filter(t=>t.status==="open");
+  }
+  function slaBreaches(){
+    const now=Date.now();
+    return state.tasks.filter(t=>t.status==="open" && new Date(t.dueAt).getTime()<now).length;
+  }
+
+  /* ====== FILTER + SORT ====== */
+  function filteredMembers(){
+    const q=$("#search").value.trim().toLowerCase();
+    const rf=$("#roleFilter").value;
+    const sf=$("#shiftFilter").value;
+    const st=$("#statusFilter").value;
+
+    let list=[...state.members];
+
+    if(rf!=="all") list=list.filter(m=>m.role===rf);
+    if(sf!=="all") list=list.filter(m=>m.shift===sf);
+    if(st!=="all") list=list.filter(m=>m.status===st);
+
+    if(q){
+      list=list.filter(m=>{
+        const hay = [
+          m.name, m.email, m.role, m.shift, m.status, m.phone, (m.skills||[]).join(" "), m.notes
+        ].join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const {key,dir}=state.sort;
+    list.sort((a,b)=>{
+      const av=a[key], bv=b[key];
+      if(key==="skills"){
+        const as=(a.skills||[]).join(",").toLowerCase();
+        const bs=(b.skills||[]).join(",").toLowerCase();
+        if(as<bs) return dir==="asc"?-1:1;
+        if(as>bs) return dir==="asc"?1:-1;
+        return 0;
+      }
+      if(key==="assigned"){
+        const an=openTasks(a.id).length, bn=openTasks(b.id).length;
+        return dir==="asc"? an-bn : bn-an;
+      }
+      if(key==="lastActive"){
+        const at=new Date(av||0).getTime(), bt=new Date(bv||0).getTime();
+        return dir==="asc"? at-bt : bt-at;
+      }
+      const as=String(av??"").toLowerCase(), bs=String(bv??"").toLowerCase();
+      if(as<bs) return dir==="asc"?-1:1;
+      if(as>bs) return dir==="asc"?1:-1;
+      return 0;
+    });
+
+    return list;
+  }
+
+  function updateSortIcons(){
+    $$("thead th .sort").forEach(sp=> sp.textContent="↕");
+    const sp = $("#s-"+state.sort.key);
+    if(sp) sp.textContent = state.sort.dir==="asc" ? "↑" : "↓";
+  }
+
+  /* ====== RENDER ====== */
+  function renderKPIs(){
+    $("#kTotal").textContent = state.members.length;
+    $("#kDuty").textContent = state.members.filter(m=>m.status==="on_duty").length;
+    $("#kPending").textContent = state.tasks.filter(t=>t.status==="open").length;
+    $("#kSla").textContent = slaBreaches();
+  }
+
+  function renderTable(){
+    renderKPIs();
+    updateSortIcons();
+
+    const list=filteredMembers();
+    $("#showCount").textContent = list.length;
+
+    const tb=$("#tbody");
+    tb.innerHTML="";
+
+    if(!list.length){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td colspan="8" style="padding:18px 16px;color:rgba(255,255,255,.62)">No members found.</td>`;
+      tb.appendChild(tr);
+      return;
+    }
+
+    list.forEach(m=>{
+      const open=openTasks(m.id);
+      const last = m.lastActive ? new Date(m.lastActive).toLocaleString() : "-";
+      const skills=(m.skills||[]).slice(0,4).map(s=>`<span class="tag info">${escapeHTML(s)}</span>`).join(" ");
+      const more = (m.skills||[]).length>4 ? `<span class="tag">+${(m.skills||[]).length-4}</span>` : "";
+
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-weight:900">${escapeHTML(m.name)}</div>
+            <div class="muted" style="font-size:12px">${escapeHTML(m.email||"—")} • ${escapeHTML(m.phone||"—")}</div>
+          </div>
+        </td>
+        <td><span class="tag info">${escapeHTML(roleLabel(m.role))}</span></td>
+        <td><span class="tag">${escapeHTML(shiftLabel(m.shift))}</span></td>
+        <td>${statusTag(m.status)}</td>
+        <td>${skills} ${more}</td>
+        <td><span class="tag ${open.length? "warn":"good"}">${open.length} open</span></td>
+        <td class="muted">${escapeHTML(last)}</td>
+        <td>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" data-view="${m.id}">👁 View</button>
+            <button class="btn" data-edit="${m.id}">✏️ Edit</button>
+            <button class="btn" data-task="${m.id}">🧾 Task</button>
+          </div>
+        </td>
+      `;
+
+      tr.querySelector("[data-view]").addEventListener("click",(e)=>{ e.stopPropagation(); openDrawer(m.id); });
+      tr.querySelector("[data-edit]").addEventListener("click",(e)=>{ e.stopPropagation(); openEdit(m.id); });
+      tr.querySelector("[data-task]").addEventListener("click",(e)=>{ e.stopPropagation(); openTaskModal(m.id); });
+
+      tr.addEventListener("click", ()=>openDrawer(m.id));
+      tb.appendChild(tr);
+    });
+  }
+
+  /* ====== DRAWER ====== */
+  function openDrawer(id){
+    state.selectedId=id;
+    const m=state.members.find(x=>x.id===id);
+    if(!m) return;
+
+    const tasks=memberTasks(id);
+    const open=tasks.filter(t=>t.status==="open");
+    const done=tasks.filter(t=>t.status==="done");
+    const now=Date.now();
+    const breaches=open.filter(t=>new Date(t.dueAt).getTime()<now).length;
+
+    const skills=(m.skills||[]).map(s=>`<span class="tag info">${escapeHTML(s)}</span>`).join(" ");
+    const taskRows = tasks
+      .slice()
+      .sort((a,b)=> new Date(b.createdAt)-new Date(a.createdAt))
+      .slice(0,7)
+      .map(t=>{
+        const overdue = (t.status==="open" && new Date(t.dueAt).getTime()<now);
+        return `
+          <div class="kv" style="grid-template-columns: 1fr;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <div style="font-weight:900">${escapeHTML(t.title)}</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                ${prioTag(t.prio)}
+                <span class="tag ${t.status==="done" ? "good" : "warn"}">${t.status==="done"?"Done":"Open"}</span>
+                ${overdue ? `<span class="tag bad">Overdue</span>` : ``}
+              </div>
+            </div>
+            <div class="muted" style="font-size:12px;margin-top:6px">
+              Due: ${escapeHTML(new Date(t.dueAt).toLocaleString())} • Created: ${escapeHTML(new Date(t.createdAt).toLocaleString())}
+            </div>
+            ${t.desc ? `<div class="muted" style="font-size:12px;margin-top:6px">${escapeHTML(t.desc)}</div>` : ``}
+          </div>
+        `;
+      }).join("");
+
+    $("#dTitle").textContent = m.name;
+
+    $("#drawerBody").innerHTML = `
+      <div class="kv">
+        <div class="k">Role</div><div class="v">${escapeHTML(roleLabel(m.role))}</div>
+        <div class="k">Shift</div><div class="v">${escapeHTML(shiftLabel(m.shift))}</div>
+        <div class="k">Status</div><div class="v">${statusTag(m.status)}</div>
+        <div class="k">Email</div><div class="v">${escapeHTML(m.email||"—")}</div>
+        <div class="k">Phone</div><div class="v">${escapeHTML(m.phone||"—")}</div>
+      </div>
+
+      <div class="kv">
+        <div class="k">Open tasks</div><div class="v">${open.length}</div>
+        <div class="k">Done tasks</div><div class="v">${done.length}</div>
+        <div class="k">SLA breaches</div><div class="v">${breaches}</div>
+        <div class="k">Last active</div><div class="v">${escapeHTML(m.lastActive ? new Date(m.lastActive).toLocaleString() : "—")}</div>
+      </div>
+
+      <div class="kv" style="grid-template-columns: 1fr;">
+        <div class="k">Skills</div>
+        <div class="v" style="display:flex;gap:8px;flex-wrap:wrap">${skills || `<span class="muted">No skills added</span>`}</div>
+      </div>
+
+      <div class="kv" style="grid-template-columns: 1fr;">
+        <div class="k">Notes</div>
+        <div class="v">${escapeHTML(m.notes||"—")}</div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <b style="font-size:13px">Recent Tasks</b>
+        <span class="tag ${breaches? "bad":"good"}">${breaches?`${breaches} overdue`:"No overdue"}</span>
+      </div>
+
+      ${tasks.length ? taskRows : `<div class="kv" style="grid-template-columns: 1fr;"><div class="muted">No tasks assigned yet.</div></div>`}
+    `;
+
+    $("#drawerBack").classList.add("open");
+    $("#drawer").classList.add("open");
+
+    $("#toggleDutyBtn").textContent = (m.status==="on_duty") ? "⏸ Set Off Duty" : "⚡ Set On Duty";
+  }
+
+  function closeDrawer(){
+    $("#drawerBack").classList.remove("open");
+    $("#drawer").classList.remove("open");
+  }
+  $("#drawerBack").addEventListener("click", closeDrawer);
+  $("#closeDrawer").addEventListener("click", closeDrawer);
+
+  $("#toggleDutyBtn").addEventListener("click", ()=>{
+    const m=state.members.find(x=>x.id===state.selectedId);
+    if(!m) return;
+    m.status = (m.status==="on_duty") ? "off_duty" : "on_duty";
+    m.lastActive = nowISO();
+    saveAll();
+    renderTable();
+    openDrawer(m.id);
+    toast("Updated", `${m.name} status updated.`, "⚡");
+  });
+
+  $("#editFromDrawerBtn").addEventListener("click", ()=>{
+    if(state.selectedId) openEdit(state.selectedId);
+  });
+
+  $("#assignTaskBtn").addEventListener("click", ()=>{
+    if(state.selectedId) openTaskModal(state.selectedId);
+  });
+
+  /* ====== MODAL (ADD/EDIT) ====== */
+  function openModal(){
+    $("#modalBack").classList.add("open");
+  }
+  function closeModal(){
+    $("#modalBack").classList.remove("open");
+  }
+  $("#closeModal").addEventListener("click", closeModal);
+  $("#cancelBtn").addEventListener("click", closeModal);
+
+  function clearForm(){
+    $("#fName").value="";
+    $("#fEmail").value="";
+    $("#fRole").value="technician";
+    $("#fShift").value="day";
+    $("#fStatus").value="on_duty";
+    $("#fPhone").value="";
+    $("#fSkills").value="";
+    $("#fNotes").value="";
+  }
+
+  function openAdd(){
+    state.editId=null;
+    $("#mTitle").textContent="Add Member";
+    $("#deleteBtn").style.display="none";
+    clearForm();
+    openModal();
+  }
+
+  function openEdit(id){
+    const m=state.members.find(x=>x.id===id);
+    if(!m) return;
+    state.editId=id;
+
+    $("#mTitle").textContent="Edit Member";
+    $("#deleteBtn").style.display="inline-flex";
+
+    $("#fName").value=m.name||"";
+    $("#fEmail").value=m.email||"";
+    $("#fRole").value=m.role||"technician";
+    $("#fShift").value=m.shift||"day";
+    $("#fStatus").value=m.status||"on_duty";
+    $("#fPhone").value=m.phone||"";
+    $("#fSkills").value=(m.skills||[]).join(", ");
+    $("#fNotes").value=m.notes||"";
+    openModal();
+  }
+
+  $("#addBtn").addEventListener("click", openAdd);
+
+  $("#saveBtn").addEventListener("click", ()=>{
+    const name=$("#fName").value.trim();
+    if(!name){ toast("Error","Name is required.","⚠️"); return; }
+
+    const obj={
+      name,
+      email: $("#fEmail").value.trim(),
+      role: $("#fRole").value,
+      shift: $("#fShift").value,
+      status: $("#fStatus").value,
+      phone: $("#fPhone").value.trim(),
+      skills: $("#fSkills").value.split(",").map(s=>s.trim()).filter(Boolean),
+      notes: $("#fNotes").value.trim(),
+      lastActive: nowISO()
+    };
+
+    if(state.editId){
+      const m=state.members.find(x=>x.id===state.editId);
+      Object.assign(m, obj);
+      toast("Saved","Member updated.","✅");
+    }else{
+      state.members.push({id:uid(), ...obj});
+      toast("Added","New member created.","➕");
+    }
+
+    saveAll();
+    closeModal();
+    renderTable();
+
+    // refresh drawer if open
+    if(state.selectedId) openDrawer(state.selectedId);
+  });
+
+  $("#deleteBtn").addEventListener("click", ()=>{
+    if(!state.editId) return;
+    const m=state.members.find(x=>x.id===state.editId);
+    if(!m) return;
+
+    const yes = confirm(`Delete member "${m.name}"? This will also remove their tasks.`);
+    if(!yes) return;
+
+    state.members = state.members.filter(x=>x.id!==state.editId);
+    state.tasks = state.tasks.filter(t=>t.memberId!==state.editId);
+
+    if(state.selectedId===state.editId) closeDrawer();
+    state.editId=null;
+    saveAll();
+    closeModal();
+    renderTable();
+    toast("Deleted","Member removed.","🗑");
+  });
+
+  /* ====== TASK MODAL ====== */
+  function openTaskModal(memberId){
+    state.selectedId = memberId;
+    $("#tTitle").value="";
+    $("#tPrio").value="medium";
+    $("#tDue").value=12;
+    $("#tStatus").value="open";
+    $("#tDesc").value="";
+    $("#taskBack").classList.add("open");
+  }
+  function closeTaskModal(){ $("#taskBack").classList.remove("open"); }
+  $("#closeTask").addEventListener("click", closeTaskModal);
+  $("#taskCancel").addEventListener("click", closeTaskModal);
+
+  $("#taskSave").addEventListener("click", ()=>{
+    const m=state.members.find(x=>x.id===state.selectedId);
+    if(!m) return;
+
+    const title=$("#tTitle").value.trim();
+    if(!title){ toast("Error","Task title is required.","⚠️"); return; }
+
+    const dueH=Math.max(1, Number($("#tDue").value||12));
+    const dueAt=new Date(Date.now()+dueH*3600000).toISOString();
+
+    state.tasks.push({
+      id:uid(),
+      memberId:m.id,
+      title,
+      prio: $("#tPrio").value,
+      status: $("#tStatus").value,
+      createdAt: nowISO(),
+      dueAt,
+      desc: $("#tDesc").value.trim()
+    });
+
+    m.lastActive = nowISO();
+    saveAll();
+    closeTaskModal();
+    renderTable();
+    openDrawer(m.id);
+    toast("Assigned", `Task added to ${m.name}.`, "🧾");
+  });
+
+  /* ====== BULK + EXPORT + SEED ====== */
+  $("#bulkDutyBtn").addEventListener("click", ()=>{
+    state.members.forEach(m=>{ m.status="on_duty"; m.lastActive=nowISO(); });
+    saveAll();
+    renderTable();
+    toast("Updated","All members set to On duty.","⚡");
+  });
+
+  function exportCSV(){
+    const list=filteredMembers();
+    const header=["Name","Email","Role","Shift","Status","Phone","Skills","OpenTasks","LastActive"];
+    const out=[header];
+
+    list.forEach(m=>{
+      out.push([
+        m.name, m.email, m.role, m.shift, m.status, m.phone,
+        (m.skills||[]).join(" | "),
+        String(openTasks(m.id).length),
+        m.lastActive ? new Date(m.lastActive).toLocaleString() : ""
+      ]);
+    });
+
+    const csv=out.map(r=>r.map(c=>`"${String(c??"").replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="gear-guard-teams.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Exported","CSV downloaded.","⬇️");
+  }
+  $("#exportBtn").addEventListener("click", exportCSV);
+
+  $("#seedBtn").addEventListener("click", ()=>{
+    const m = {id:uid(), name:"Nikhil", email:"nikhil@company.com", role:"technician", shift:"night", status:"on_duty", phone:"+91 90000 55555", skills:["Bearings","Motor","Vibration"], notes:"Night shift specialist.", lastActive: nowISO()};
+    state.members.push(m);
+    state.tasks.push({id:uid(), memberId:m.id, title:"PM check - Forklift 2", prio:"medium", status:"open", createdAt:nowISO(), dueAt:new Date(Date.now()+10*3600000).toISOString(), desc:"Inspect battery & brakes."});
+    saveAll();
+    renderTable();
+    toast("Added","Demo member + task added.","➕");
+  });
+
+  /* ====== FILTER INPUTS ====== */
+  ["search","roleFilter","shiftFilter","statusFilter"].forEach(id=>{
+    $("#"+id).addEventListener(id==="search"?"input":"change", ()=>renderTable());
+  });
+
+  $("#resetBtn").addEventListener("click", ()=>{
+    $("#search").value="";
+    $("#roleFilter").value="all";
+    $("#shiftFilter").value="all";
+    $("#statusFilter").value="all";
+    state.sort={key:"name", dir:"asc"};
+    renderTable();
+    toast("Reset","Filters cleared.","🧹");
+  });
+
+  /* ====== SORT EVENTS ====== */
+  $$("thead th[data-key]").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key=th.dataset.key;
+      if(state.sort.key===key) state.sort.dir = (state.sort.dir==="asc"?"desc":"asc");
+      else { state.sort.key=key; state.sort.dir="asc"; }
+      renderTable();
+    });
+  });
+
+  /* ====== INIT ====== */
+  renderTable();
+</script>
+</body>
+</html>

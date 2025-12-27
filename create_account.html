@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriCredit - Farmer Credit Score Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background: #2c3e50;
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .logo {
+            font-size: 1.8em;
+            font-weight: bold;
+            display:flex;
+            height:50px;
+            width:50px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+        }
+
+        nav ul li {
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            font-size: 1.1em;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #f39c12;
+        }
+
+        .banner {
+            height: 60vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 900;
+            font-size: 1.5rem;
+            color:white;
+            margin-bottom: -40px;
+            padding:5rem;
+
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .container ul {
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        .container ul li {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+            justify-content: space-between;
+            display: flex;
+        }
+        .single{
+            background: url("https://i.pinimg.com/736x/62/69/be/6269be885933c337a576758ea75078df.jpg") no-repeat center center/cover;
+            opacity:5;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">AgriCredit
+        <img src="https://img.icons8.com/?size=512w&id=15168&format=png">
+    </div>
+    <nav>
+        <ul>
+            <li><a href="{% url 'home' %}">GIS DATA</a></li>
+            <li><a href="{% url 'check_credit' %}">CHECK CREDIT SCORE</a></li>
+            <li><a href="{% url 'about_us' %}">CONTACT US</a></li>
+            <li><a href="{% url 'about_crops' %}">ABOUT CROPS</a></li>
+            <li><a href="{% url 'signup' %}">Logout</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="single">
+<section class="banner">
+    <div><h1>Empowering Farmers with Credit Evaluation</h1>
+            <h1>AgriCredit</h1>
+            <p>Farmer Credit Evaluation Dashboard</p>
+            <h1>Our Mission</h1> 
+            <br/>
+         <p>At AgriCredit, we aim to revolutionize the way farming loans are evaluated by introducing a more inclusive and accurate credit scoring system. </p>
+            <p> Traditional methods often overlook the unique challenges faced by farmers, such as land quality, weather patterns, and crop yield potential.</p>
+         <p>Our mission is to empower farmers by incorporating non-traditional data sources—including live GIS data, upcoming weather forecasts, and soil health metrics—to create a comprehensive and risk-aware credit evaluation tool. By leveraging these insights, we help financial institutions make informed lending decisions, ensuring farmers gain access to fair and tailored credit options that support their growth and sustainability.</p>
+    </div>
+    
+</section>
+<div class="sec2">
+<div class="container">
+    <h1>It's Very Easy to Use</h1>
+    <ol type="1">
+        <li> Create your account</li>
+        <li> Select your state and crop you want to cultivate</li>
+        <li> Enter details about land area, loan amount, city, and click 'Check Credit Score'</li>
+        <li>You're done! We'll evaluate your credit score for loan approval.</li>
+    </ol>
+</div>
+
+<div class="container">
+    <h1>Additional Features</h1>
+    <ul>
+        <li>✅ Find your location on the map and check the weather (in GIS Data tab)</li>
+        <li>✅ Read detailed information about various crops (in About Crops section)</li>
+    </ul>
+</div>
+</div>
+</div>
+<footer>
+    <p>© 2025 AgriCredit | Privacy Policy | Terms of Service</p>
+    <p>Developed By: Jyotier Vithlani | Abbas Kharodawala | Yagnik Vanodiya | Nikunj Kalariya| Fagun Rathod</p>
+</footer>
+
+</body>
+</html>

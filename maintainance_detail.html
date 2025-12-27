@@ -1,0 +1,17 @@
+<h1>{{ req.subject }}</h1>
+<p>Equipment: {{ req.equipment }}</p>
+<p>Status: {{ req.stage }}</p>
+
+<form method="POST">
+  {% csrf_token %}
+  <select name="stage">
+    <option value="new">New</option>
+    <option value="in_progress">In Progress</option>
+    <option value="repaired">Repaired</option>
+    <option value="scrap">Scrap</option>
+  </select>
+
+  <textarea name="notes">{{ req.notes }}</textarea>
+
+  <button type="submit">Save</button>
+</form>

@@ -1,0 +1,1795 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GearGuard • Equipment</title>
+
+  <style>
+    :root{
+      --bg:#000000;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --muted2: rgba(255,255,255,.48);
+
+      --good:#33d17a;
+      --warn:#f5c542;
+      --bad:#ff4d4d;
+      --blue:#7aa7ff;
+      --violet:#c39cff;
+
+      --shadow: 0 22px 55px rgba(0,0,0,.45);
+      --shadow2: 0 12px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --radius2: 14px;
+
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* subtle overlay */
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(122,167,255,.12), transparent 60%),
+        radial-gradient(1000px 600px at 20% 110%, rgba(51,209,122,.10), transparent 65%);
+      opacity:.70;
+      z-index:0;
+    }
+    body:after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.10;
+      z-index:0;
+    }
+
+    .app{ position:relative; z-index:1; min-height:100%; display:flex; flex-direction:column; }
+
+    /* ===== TOPBAR / NAVBAR ===== */
+    .topbar{
+      position:sticky; top:0; z-index:60;
+      backdrop-filter: blur(12px);
+      background: rgba(8,10,18,.72);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner{
+      width:min(1260px, calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 220px;
+    }
+    .logo{
+      width:44px;height:44px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 65%),
+        linear-gradient(135deg, rgba(122,167,255,.88), rgba(51,209,122,.78));
+      box-shadow: 0 10px 30px rgba(0,0,0,.38);
+      position:relative;
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      font-weight:900;
+    }
+    .logo:after{
+      content:"";
+      position:absolute;
+      inset:9px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.35);
+      opacity:.65;
+    }
+    .brand h1{ margin:0; font-size:15px; letter-spacing:.2px; line-height:1.05; }
+    .brand span{ display:block; font-size:12px; color: var(--muted); margin-top:2px; }
+
+    .nav{
+      display:flex;
+      gap:8px;
+      flex:1;
+      overflow:auto hidden;
+      scrollbar-width:none;
+      padding-bottom:2px;
+    }
+    .nav::-webkit-scrollbar{ display:none; }
+
+    .tab{
+      appearance:none;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size:13px;
+      padding:9px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: .18s ease;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .tab:hover{
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-color: rgba(255,255,255,.08);
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(122,167,255,.13);
+      border-color: rgba(122,167,255,.28);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25) inset;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 340px;
+      justify-content:flex-end;
+    }
+    .iconbtn{
+      width:40px;height:40px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .iconbtn:hover{
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+      background: rgba(255,255,255,.06);
+    }
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      cursor:pointer;
+      user-select:none;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.14);
+    }
+    .pill:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+    .avatar{
+      width:28px;height:28px;
+      border-radius: 12px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.22), transparent 65%),
+        linear-gradient(135deg, rgba(255,77,77,.74), rgba(245,197,66,.62));
+      border:1px solid rgba(255,255,255,.16);
+      flex:0 0 auto;
+    }
+    .pill .who{ display:flex; flex-direction:column; line-height:1.05; }
+    .pill .who b{ font-size:12.8px; font-weight:700; letter-spacing:.2px; }
+    .pill .who small{ font-size:11px; color: var(--muted); }
+
+    .menu{ position:relative; }
+    .dropdown{
+      position:absolute;
+      right:0;
+      top: calc(100% + 10px);
+      width: 260px;
+      background: rgba(10,12,22,.94);
+      border:1px solid var(--stroke2);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:none;
+    }
+    .dropdown.open{ display:block; }
+    .dropdown .head{
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .dropdown .head .minia{
+      width:34px;height:34px;border-radius:14px;
+      background: linear-gradient(135deg, rgba(122,167,255,.60), rgba(51,209,122,.55));
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .dropdown .head b{ display:block; font-size:13px; }
+    .dropdown .head small{ color: var(--muted); font-size:11px; display:block; margin-top:2px; }
+    .dropdown button{
+      width:100%;
+      padding:11px 12px;
+      text-align:left;
+      border:0;
+      background: transparent;
+      color: var(--text);
+      cursor:pointer;
+      font-size:13px;
+      transition:.15s ease;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dropdown button:hover{ background: rgba(255,255,255,.06); }
+    .dropdown button.danger{ color: #ffb3b3; }
+
+    /* ===== MAIN ===== */
+    .main{
+      width:min(1260px, calc(100% - 32px));
+      margin: 18px auto 40px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .header-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .page-title{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .badge{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      letter-spacing:.2px;
+      height: fit-content;
+    }
+    .page-title h2{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size:12px;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .search{
+      position:relative;
+      width:320px;
+    }
+    .search input{
+      width:100%;
+      height:42px;
+      padding:0 40px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      font-size:14px;
+      outline:none;
+    }
+    .search input::placeholder{ color:rgba(255,255,255,0.4); }
+    .search input:focus{
+      border-color:#7aa7ff;
+      box-shadow:0 0 0 3px rgba(122,167,255,0.25);
+    }
+    .search-icon{
+      position:absolute;
+      left:12px;
+      top:50%;
+      transform:translateY(-50%);
+      color:rgba(255,255,255,0.6);
+      pointer-events:none;
+    }
+    .clear-icon{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      color:rgba(255,255,255,0.6);
+      cursor:pointer;
+      display:none;
+    }
+    .clear-icon:hover{ color:#ffffff; }
+
+    .select{
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      padding: 0 12px;
+      outline:none;
+      cursor:pointer;
+      min-width: 200px;
+    }
+
+    .btn{
+      height:40px;
+      padding:0 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      transition:.18s ease;
+      font-size:12.8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+    }
+    .btn:hover{
+      border-color: var(--stroke2);
+      background: rgba(255,255,255,.06);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0); }
+    .btn.primary{
+      border-color: rgba(122,167,255,.34);
+      background: rgba(122,167,255,.14);
+    }
+    .btn.good{
+      border-color: rgba(51,209,122,.34);
+      background: rgba(51,209,122,.14);
+    }
+    .btn.bad{
+      border-color: rgba(255,77,77,.30);
+      background: rgba(255,77,77,.12);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      align-items:start;
+    }
+
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .card .c-head{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .card .c-head b{
+      font-size:13px;
+      letter-spacing:.2px;
+    }
+    .card .c-body{ padding: 14px 16px; }
+
+    /* KPI tiles */
+    .stat{
+      min-height: 118px;
+      padding: 18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .stat .left{ display:flex; flex-direction:column; gap:6px; }
+    .stat .title{ font-size:13px; font-weight:900; letter-spacing:.2px; }
+    .stat .value{ font-size:22px; font-weight:900; letter-spacing:.2px; line-height:1; }
+    .stat .desc{ font-size:12.3px; color: var(--muted); line-height:1.25; }
+    .spark{
+      width:90px;height:56px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+    }
+    .spark canvas{ width:100%; height:100%; }
+
+    .stat.red{ border-color: rgba(255,77,77,.50); }
+    .stat.red:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(255,77,77,.88); }
+    .stat.blue{ border-color: rgba(122,167,255,.50); }
+    .stat.blue:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(122,167,255,.88); }
+    .stat.green{ border-color: rgba(51,209,122,.50); }
+    .stat.green:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(51,209,122,.88); }
+    .stat.warn{ border-color: rgba(245,197,66,.50); }
+    .stat.warn:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(245,197,66,.88); }
+
+    /* Health badge */
+    .hb{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .hb.good{ border-color: rgba(51,209,122,.26); background: rgba(51,209,122,.10); }
+    .hb.warn{ border-color: rgba(245,197,66,.26); background: rgba(245,197,66,.10); }
+    .hb.bad{ border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10); }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .tag.new{ border-color: rgba(122,167,255,.26); background: rgba(122,167,255,.10); }
+    .tag.progress{ border-color: rgba(245,197,66,.26); background: rgba(245,197,66,.10); }
+    .tag.repaired{ border-color: rgba(51,209,122,.26); background: rgba(51,209,122,.10); }
+    .tag.scrap{ border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10); }
+
+    /* Table */
+    .tableWrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width: 1050px;
+    }
+    thead th{
+      text-align:left;
+      font-weight:850;
+      color: rgba(255,255,255,.82);
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.22);
+      background: rgba(255,255,255,.02);
+      white-space:nowrap;
+      cursor:pointer;
+      user-select:none;
+      position:relative;
+    }
+    thead th .sort{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform: translateY(-50%);
+      opacity:.55;
+      font-size:11px;
+    }
+    tbody td{
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.18);
+      color: rgba(255,255,255,.88);
+      vertical-align:top;
+    }
+    tbody tr{
+      cursor:pointer;
+      transition:.12s ease;
+    }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
+
+    .muted{ color: var(--muted); }
+
+    /* Drawer */
+    .drawerBack{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      z-index: 140;
+    }
+    .drawerBack.open{ display:block; }
+    .drawer{
+      position:fixed;
+      top:0;
+      right:-560px;
+      height:100%;
+      width:min(560px, 100%);
+      background: rgba(10,12,22,.96);
+      border-left:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      z-index: 150;
+      transition: right .22s ease;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer.open{ right:0; }
+
+    .drawer .dhead{
+      padding: 14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .drawer .dhead b{ font-size:14px; }
+    .drawer .dbody{
+      padding: 14px 16px;
+      overflow:auto;
+      display:grid;
+      gap:12px;
+    }
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .tab2{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size:12.5px;
+      padding:8px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition:.15s ease;
+    }
+    .tab2.active{
+      border-color: rgba(122,167,255,.35);
+      background: rgba(122,167,255,.14);
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap:8px 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .kv .k{ color: var(--muted); font-size:12px; }
+    .kv .v{ font-size:13px; font-weight:750; }
+
+    .drawer .dfoot{
+      padding: 12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    /* Modal */
+    .backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 160;
+    }
+    .backdrop.open{ display:flex; }
+    .modal{
+      width:min(720px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,22,.95);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mhead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:10px;
+    }
+    .modal .mhead b{ font-size:14px; letter-spacing:.2px; }
+    .modal .mbody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap:10px;
+    }
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color: var(--muted);
+      margin-bottom:6px;
+    }
+    .field input,.field select,.field textarea{
+      width:100%;
+      height:44px;
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 0 12px;
+      outline:none;
+    }
+    .field textarea{
+      min-height: 90px;
+      padding: 10px 12px;
+      height:auto;
+      resize: vertical;
+    }
+    .field input:focus,.field select:focus,.field textarea:focus{
+      border-color: rgba(122,167,255,.42);
+      box-shadow: 0 0 0 4px rgba(122,167,255,.12);
+    }
+    .modal .mfoot{
+      padding: 12px 16px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      flex-wrap:wrap;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      width:min(380px, calc(100% - 36px));
+      background: rgba(10,12,22,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      display:none;
+      gap:10px;
+      align-items:flex-start;
+      z-index:300;
+    }
+    .toast.show{ display:flex; }
+    .toast .ticon{
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .toast b{ display:block; font-size:13px; }
+    .toast small{ color: var(--muted); display:block; margin-top:2px; line-height:1.25; }
+    .toast .close{
+      margin-left:auto;
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+    }
+
+    /* Responsive */
+    @media (max-width: 720px){
+      .actions{ min-width:auto; }
+      .brand{ min-width:auto; }
+      .row2{ grid-template-columns: 1fr; }
+      table{ min-width: 980px; }
+    }
+        .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- NAVBAR -->
+    <header class="topbar">
+      <div class="topbar-inner">
+         <div class="brand">
+          <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+
+          <div>
+            <h1>GearGuard</h1>
+            <span>Maintenance Tracker</span>
+          </div>
+        </div>
+        
+
+        <<nav class="nav" aria-label="Primary">
+          <a href="{% url 'maintainance' %}" style="text-decoration:none">
+    <button class="tab" data-tab="maintenance">Maintenance</button>
+  </a>
+          <button class="tab active" data-tab="dashboard">Dashboard</button>
+           <a href="{% url 'maintenance_calendar' %}" style="text-decoration:none">
+    <button class="tab" data-tab="mainenance_calendar">Maintenance Calendar</button>
+  </a>
+  <a href="{% url 'equipment' %}" style="text-decoration:none">
+    <button class="tab" data-tab="equipment">Equipment</button>
+  </a>
+  <a href="{% url 'reporting' %}" style="text-decoration:none">
+    <button class="tab" data-tab="reporting">Reporting</button>
+  </a>
+  <a href="{% url 'teams' %}" style="text-decoration:none">
+    <button class="tab" data-tab="teams">Teams</button>
+  </a>
+     
+        </nav>
+        <div class="actions">
+          <button class="iconbtn" id="exportBtn" title="Export equipment CSV">⬇️</button>
+          <button class="iconbtn" id="refreshBtn" title="Refresh">🔄</button>
+
+          <div class="menu">
+            <div class="pill" id="userPill" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+              <div class="avatar" aria-hidden="true"></div>
+              <div class="who">
+                <b>jyotier</b>
+                <small>Current account</small>
+              </div>
+              <span style="opacity:.8">▾</span>
+            </div>
+            <div class="dropdown" id="userDropdown" role="menu">
+              <div class="head">
+                <div class="minia" aria-hidden="true"></div>
+                <div>
+                  <b>jyotier</b>
+                  <small>Signed in</small>
+                </div>
+              </div>
+              <button type="button" id="profileBtn">👤 Profile (demo)</button>
+              <button type="button" id="settingsBtn">⚙️ Settings (demo)</button>
+              <button type="button" class="danger" id="logoutBtn">🚪 Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="header-row">
+        <div class="page-title">
+          <span class="badge">Asset Hub</span>
+          <div>
+            <h2>Equipment</h2>
+            <p class="subtitle">Manage assets, health score, warranty, preventive schedules, and compliance documents.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search">
+            <span class="search-icon">🔍</span>
+            <input id="searchInput" type="text" placeholder="Search equipment, model, serial, location, owner..." />
+            <span class="clear-icon" id="clearSearch">✕</span>
+          </div>
+
+          <select class="select" id="statusFilter" title="Status filter">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="maintenance_hold">Maintenance Hold</option>
+            <option value="scrap">Scrap</option>
+          </select>
+
+          <select class="select" id="criticalFilter" title="Criticality filter">
+            <option value="all">All Criticality</option>
+            <option value="critical">Critical</option>
+            <option value="standard">Standard</option>
+            <option value="low">Low</option>
+          </select>
+
+          <button class="btn primary" id="addBtn">＋ Add Equipment</button>
+          <button class="btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <!-- KPI ROW -->
+      <section class="grid" aria-label="KPIs">
+        <div class="card stat blue" style="grid-column: 1 / span 3;">
+          <div class="left">
+            <div class="title" style="color: rgba(122,167,255,.98);">Total Equipment</div>
+            <div class="value" id="kTotal">0</div>
+            <div class="desc">All assets tracked</div>
+          </div>
+          <div class="spark"><canvas id="spTotal" width="180" height="110"></canvas></div>
+        </div>
+
+        <div class="card stat red" style="grid-column: 4 / span 3;">
+          <div class="left">
+            <div class="title" style="color: rgba(255,77,77,.98);">Critical (Health &lt; 30)</div>
+            <div class="value" id="kCritical">0</div>
+            <div class="desc">Immediate attention</div>
+          </div>
+          <div class="spark"><canvas id="spCritical" width="180" height="110"></canvas></div>
+        </div>
+
+        <div class="card stat warn" style="grid-column: 7 / span 3;">
+          <div class="left">
+            <div class="title" style="color: rgba(245,197,66,.98);">Due Soon (PM)</div>
+            <div class="value" id="kDueSoon">0</div>
+            <div class="desc">Next 7 days</div>
+          </div>
+          <div class="spark"><canvas id="spDue" width="180" height="110"></canvas></div>
+        </div>
+
+        <div class="card stat green" style="grid-column: 10 / span 3;">
+          <div class="left">
+            <div class="title" style="color: rgba(51,209,122,.98);">Operational</div>
+            <div class="value" id="kOperational">0</div>
+            <div class="desc">Active and healthy</div>
+          </div>
+          <div class="spark"><canvas id="spOp" width="180" height="110"></canvas></div>
+        </div>
+
+        <!-- TABLE CARD -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="c-head">
+            <b>Equipment Registry</b>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="btn" style="cursor:default">Showing <b id="rowCount" style="margin-left:6px">0</b></span>
+              <span class="btn bad" style="cursor:default">Scrap <b id="scrapCount" style="margin-left:6px">0</b></span>
+              <span class="btn" style="cursor:default;border-color:rgba(245,197,66,.26);background:rgba(245,197,66,.10)">
+                Maintenance Hold <b id="holdCount" style="margin-left:6px">0</b>
+              </span>
+            </div>
+          </div>
+
+          <div class="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-key="name">Equipment <span class="sort" id="sort-name">↕</span></th>
+                  <th data-key="type">Type <span class="sort" id="sort-type">↕</span></th>
+                  <th data-key="status">Status <span class="sort" id="sort-status">↕</span></th>
+                  <th data-key="health">Health <span class="sort" id="sort-health">↕</span></th>
+                  <th data-key="criticality">Criticality <span class="sort" id="sort-criticality">↕</span></th>
+                  <th data-key="location">Location <span class="sort" id="sort-location">↕</span></th>
+                  <th data-key="owner">Owner <span class="sort" id="sort-owner">↕</span></th>
+                  <th data-key="pmDate">Next PM <span class="sort" id="sort-pmDate">↕</span></th>
+                  <th data-key="warrantyEnd">Warranty <span class="sort" id="sort-warrantyEnd">↕</span></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- DRAWER -->
+    <div class="drawerBack" id="drawerBack"></div>
+    <aside class="drawer" id="drawer">
+      <div class="dhead">
+        <b id="dTitle">Equipment</b>
+        <button class="iconbtn" id="closeDrawer" title="Close" style="width:40px;height:40px">✕</button>
+      </div>
+
+      <div class="dbody">
+        <div class="tabs">
+          <button class="tab2 active" data-pane="overview">Overview</button>
+          <button class="tab2" data-pane="maintenance">Maintenance</button>
+          <button class="tab2" data-pane="docs">Documents</button>
+        </div>
+
+        <div id="pane-overview"></div>
+        <div id="pane-maintenance" style="display:none"></div>
+        <div id="pane-docs" style="display:none"></div>
+      </div>
+
+      <div class="dfoot">
+        <button class="btn" id="editBtn">Edit</button>
+        <button class="btn" id="holdBtn">Toggle Hold</button>
+        <button class="btn bad" id="scrapBtn">Mark Scrap</button>
+      </div>
+    </aside>
+
+    <!-- MODAL (ADD/EDIT) -->
+    <div class="backdrop" id="modalBack">
+      <div class="modal">
+        <div class="mhead">
+          <b id="modalTitle">Add Equipment</b>
+          <button class="iconbtn" id="closeModalBtn" title="Close" style="width:40px;height:40px">✕</button>
+        </div>
+
+        <div class="mbody">
+          <input type="hidden" id="fId" />
+
+          <div class="row2">
+            <div class="field">
+              <label>Equipment Name</label>
+              <input id="fName" placeholder="e.g., Drill 1 / Assembly Line 1" />
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="fType">
+                <option value="workcenter">Work Center</option>
+                <option value="machine">Machine</option>
+                <option value="it_asset">IT Asset</option>
+                <option value="vehicle">Vehicle</option>
+                <option value="utility">Utility</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Model</label>
+              <input id="fModel" placeholder="e.g., Bosch X1200" />
+            </div>
+            <div class="field">
+              <label>Serial No.</label>
+              <input id="fSerial" placeholder="e.g., SN-9842-22" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Status</label>
+              <select id="fStatus">
+                <option value="active">Active</option>
+                <option value="maintenance_hold">Maintenance Hold</option>
+                <option value="scrap">Scrap</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Criticality</label>
+              <select id="fCriticality">
+                <option value="critical">Critical</option>
+                <option value="standard">Standard</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Health Score (0–100)</label>
+              <input id="fHealth" type="number" min="0" max="100" step="1" value="80" />
+            </div>
+            <div class="field">
+              <label>Location</label>
+              <input id="fLocation" placeholder="e.g., Plant A • Bay 2" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Owner / Dept</label>
+              <input id="fOwner" placeholder="e.g., Production / IT" />
+            </div>
+            <div class="field">
+              <label>Vendor</label>
+              <input id="fVendor" placeholder="e.g., ABC Suppliers" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Purchase Date</label>
+              <input id="fPurchase" type="date" />
+            </div>
+            <div class="field">
+              <label>Warranty End</label>
+              <input id="fWarranty" type="date" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>PM Frequency (days)</label>
+              <input id="fPmFreq" type="number" min="1" step="1" value="30" />
+            </div>
+            <div class="field">
+              <label>Next Preventive (PM) Date</label>
+              <input id="fPmDate" type="date" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notes</label>
+            <textarea id="fNotes" placeholder="Any notes about safety, issues, SOP links..."></textarea>
+          </div>
+        </div>
+
+        <div class="mfoot">
+          <button class="btn bad" id="deleteBtn" style="display:none">Delete</button>
+          <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn" id="cancelBtn">Cancel</button>
+            <button class="btn primary" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+      <div class="ticon" id="toastIcon">✅</div>
+      <div>
+        <b id="toastTitle">Saved</b>
+        <small id="toastMsg">Done.</small>
+      </div>
+      <button class="close" id="toastClose" title="Close">✕</button>
+    </div>
+
+    <script>
+      // ===== Demo navigation =====
+      function navDemo(where){
+        toast("Navigation", `Clicked "${where}" (demo). Link with Django later.`, "🧭");
+      }
+
+      // ===== Utilities =====
+      const $ = (q)=> document.querySelector(q);
+      const $$ = (q)=> [...document.querySelectorAll(q)];
+      const clamp = (n,a,b)=> Math.max(a, Math.min(b, n));
+      function uid(){ return "e_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
+      function escapeHTML(str){
+        return String(str ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+      function isoDate(d){
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth()+1).padStart(2,"0");
+        const da = String(dt.getDate()).padStart(2,"0");
+        return `${y}-${m}-${da}`;
+      }
+      function parseISO(s){
+        const [y,m,d] = (s||"").split("-").map(Number);
+        if(!y||!m||!d) return null;
+        const dt = new Date(y, m-1, d); dt.setHours(0,0,0,0);
+        return dt;
+      }
+      function daysBetween(a,b){
+        const A = new Date(a); A.setHours(0,0,0,0);
+        const B = new Date(b); B.setHours(0,0,0,0);
+        return Math.round((B-A)/(1000*60*60*24));
+      }
+
+      // ===== Local state (no backend) =====
+      const demoSeed = ()=> ([
+        {
+          id: uid(),
+          name: "Assembly 1",
+          type: "workcenter",
+          model: "Line-A1",
+          serial: "WC-001",
+          status: "active",
+          criticality: "critical",
+          health: 34,
+          location: "Plant A • Assembly",
+          owner: "Production",
+          vendor: "Vasu Tools",
+          purchaseDate: "2024-03-11",
+          warrantyEnd: "2026-03-10",
+          pmFreq: 30,
+          pmDate: isoDate(new Date(Date.now() + 4*86400000)),
+          notes: "OEE target high. Keep lubrication schedule tight.",
+          createdAt: Date.now()-1200000
+        },
+        {
+          id: uid(),
+          name: "Drill 1",
+          type: "machine",
+          model: "DrillMaster D10",
+          serial: "SN-DR-9912",
+          status: "active",
+          criticality: "standard",
+          health: 78,
+          location: "Plant A • Bay 2",
+          owner: "Maintenance",
+          vendor: "ABC Suppliers",
+          purchaseDate: "2023-08-20",
+          warrantyEnd: "2025-08-19",
+          pmFreq: 60,
+          pmDate: isoDate(new Date(Date.now() + 16*86400000)),
+          notes: "Chuck alignment check quarterly.",
+          createdAt: Date.now()-2200000
+        },
+        {
+          id: uid(),
+          name: "UPS Room 1",
+          type: "utility",
+          model: "APC 5kVA",
+          serial: "UPS-5512",
+          status: "maintenance_hold",
+          criticality: "critical",
+          health: 42,
+          location: "Block B • Server Room",
+          owner: "IT",
+          vendor: "PowerCare",
+          purchaseDate: "2022-01-05",
+          warrantyEnd: "2025-01-04",
+          pmFreq: 90,
+          pmDate: isoDate(new Date(Date.now() + 2*86400000)),
+          notes: "Battery pack replacement due soon.",
+          createdAt: Date.now()-3200000
+        },
+        {
+          id: uid(),
+          name: "Old Conveyor 02",
+          type: "machine",
+          model: "Conv-X",
+          serial: "CONV-0002",
+          status: "scrap",
+          criticality: "low",
+          health: 10,
+          location: "Plant A • Storage",
+          owner: "Production",
+          vendor: "Legacy",
+          purchaseDate: "2018-05-01",
+          warrantyEnd: "2019-05-01",
+          pmFreq: 0,
+          pmDate: "",
+          notes: "Retired. Do not use. Waiting disposal.",
+          createdAt: Date.now()-5200000
+        }
+      ]);
+
+      const state = {
+        items: JSON.parse(localStorage.getItem("gg_equipment") || "null") ?? demoSeed(),
+        sort: { key:"createdAt", dir:"desc" },
+        selectedId: null,
+        editingId: null,
+      };
+
+      function persist(){
+        localStorage.setItem("gg_equipment", JSON.stringify(state.items));
+      }
+
+      // ===== Health badge =====
+      function healthBadge(h){
+        const n = Number(h ?? 0);
+        if(n < 30) return `<span class="hb bad">🔴 ${n}%</span>`;
+        if(n < 60) return `<span class="hb warn">🟡 ${n}%</span>`;
+        return `<span class="hb good">🟢 ${n}%</span>`;
+      }
+      function statusTag(s){
+        if(s==="active") return `<span class="tag repaired">Active</span>`;
+        if(s==="maintenance_hold") return `<span class="tag progress">Hold</span>`;
+        if(s==="scrap") return `<span class="tag scrap">Scrap</span>`;
+        return `<span class="tag">${escapeHTML(s)}</span>`;
+      }
+      function critTag(c){
+        if(c==="critical") return `<span class="tag scrap" style="border-color:rgba(255,77,77,.30);background:rgba(255,77,77,.12)">Critical</span>`;
+        if(c==="standard") return `<span class="tag new" style="border-color:rgba(122,167,255,.26);background:rgba(122,167,255,.10)">Standard</span>`;
+        if(c==="low") return `<span class="tag" style="border-color:rgba(255,255,255,.10);background:rgba(255,255,255,.03)">Low</span>`;
+        return `<span class="tag">${escapeHTML(c)}</span>`;
+      }
+
+      // ===== Sparkline =====
+      function drawSpark(id, values){
+        const c = document.getElementById(id);
+        if(!c) return;
+        const ctx = c.getContext("2d");
+        const w=c.width, h=c.height;
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle="rgba(255,255,255,0.02)";
+        ctx.fillRect(0,0,w,h);
+        ctx.strokeStyle="rgba(255,255,255,0.06)";
+        ctx.lineWidth=1;
+        for(let i=1;i<4;i++){
+          const y=(h/4)*i;
+          ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+        }
+        if(!values || values.length<2) return;
+        const max=Math.max(...values), min=Math.min(...values);
+        const pad=10;
+        const step=(w-pad*2)/(values.length-1);
+        ctx.strokeStyle="rgba(255,255,255,0.65)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        values.forEach((v,i)=>{
+          const t=(max===min)?0.5:(v-min)/(max-min);
+          const x=pad+step*i;
+          const y=(h-pad)-t*(h-pad*2);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle="rgba(255,255,255,0.08)";
+        ctx.lineTo(w-pad,h-pad);
+        ctx.lineTo(pad,h-pad);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // ===== Filtering/sorting =====
+      function getFiltered(){
+        const q = ($("#searchInput").value || "").trim().toLowerCase();
+        const status = $("#statusFilter").value;
+        const crit = $("#criticalFilter").value;
+
+        let list = state.items.slice();
+
+        if(q){
+          list = list.filter(e=>{
+            const hay = `${e.name} ${e.type} ${e.model} ${e.serial} ${e.status} ${e.criticality} ${e.location} ${e.owner} ${e.vendor}`.toLowerCase();
+            return hay.includes(q);
+          });
+        }
+        if(status !== "all") list = list.filter(e=> e.status === status);
+        if(crit !== "all") list = list.filter(e=> e.criticality === crit);
+
+        const {key, dir} = state.sort;
+        list.sort((a,b)=>{
+          const av=a[key], bv=b[key];
+
+          if(key==="pmDate" || key==="warrantyEnd" || key==="purchaseDate"){
+            const ad=parseISO(av)?.getTime() ?? 0;
+            const bd=parseISO(bv)?.getTime() ?? 0;
+            return dir==="asc" ? ad-bd : bd-ad;
+          }
+          if(typeof av==="number" || typeof bv==="number"){
+            const an=Number(av??0), bn=Number(bv??0);
+            return dir==="asc"? an-bn : bn-an;
+          }
+          const as=String(av??"").toLowerCase();
+          const bs=String(bv??"").toLowerCase();
+          if(as<bs) return dir==="asc"? -1 : 1;
+          if(as>bs) return dir==="asc"? 1 : -1;
+          return 0;
+        });
+
+        return list;
+      }
+
+      function setSort(key){
+        if(state.sort.key===key) state.sort.dir = state.sort.dir==="asc" ? "desc" : "asc";
+        else { state.sort.key=key; state.sort.dir="asc"; }
+        renderAll();
+      }
+
+      function updateSortIcons(){
+        $$("thead th").forEach(th=>{
+          const k=th.dataset.key;
+          const sp=$("#sort-"+k);
+          if(sp) sp.textContent="↕";
+        });
+        const sp=$("#sort-"+state.sort.key);
+        if(sp) sp.textContent = state.sort.dir==="asc" ? "↑" : "↓";
+      }
+
+      // ===== KPIs =====
+      function computeKPIs(){
+        const all = state.items.length;
+        const critical = state.items.filter(e=> (e.health ?? 100) < 30 && e.status !== "scrap").length;
+        const operational = state.items.filter(e=> e.status==="active" && (e.health ?? 0) >= 60).length;
+
+        const now = new Date();
+        const dueSoon = state.items.filter(e=>{
+          if(!e.pmDate) return false;
+          if(e.status==="scrap") return false;
+          const d=parseISO(e.pmDate);
+          if(!d) return false;
+          const diff = daysBetween(now, d);
+          return diff >= 0 && diff <= 7;
+        }).length;
+
+        return { all, critical, operational, dueSoon };
+      }
+
+      // ===== Table render =====
+      function renderTable(){
+        const list = getFiltered();
+        const tbody = $("#tbody");
+        tbody.innerHTML = "";
+
+        $("#rowCount").textContent = String(list.length);
+        $("#scrapCount").textContent = String(list.filter(e=>e.status==="scrap").length);
+        $("#holdCount").textContent = String(list.filter(e=>e.status==="maintenance_hold").length);
+
+        if(list.length===0){
+          const tr=document.createElement("tr");
+          tr.innerHTML = `<td colspan="9" style="padding:18px 16px;color:rgba(255,255,255,.62)">No equipment found. Try clearing search or filters.</td>`;
+          tbody.appendChild(tr);
+          return;
+        }
+
+        list.forEach(e=>{
+          const tr=document.createElement("tr");
+          tr.dataset.id=e.id;
+
+          const pm = e.pmDate ? e.pmDate : "—";
+          const war = e.warrantyEnd ? e.warrantyEnd : "—";
+
+          tr.innerHTML = `
+            <td>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="font-weight:900">${escapeHTML(e.name)}</div>
+                <div class="muted" style="font-size:12px">
+                  Model: ${escapeHTML(e.model || "—")} • Serial: ${escapeHTML(e.serial || "—")}
+                </div>
+              </div>
+            </td>
+            <td>${escapeHTML(e.type || "—")}</td>
+            <td>${statusTag(e.status)}</td>
+            <td>${healthBadge(e.health)}</td>
+            <td>${critTag(e.criticality)}</td>
+            <td>${escapeHTML(e.location || "—")}</td>
+            <td>${escapeHTML(e.owner || "—")}</td>
+            <td>${escapeHTML(pm)}</td>
+            <td>${escapeHTML(war)}</td>
+          `;
+
+          tr.addEventListener("click", ()=> openDrawer(e.id));
+          tbody.appendChild(tr);
+        });
+      }
+
+      // ===== Drawer =====
+      function openDrawer(id){
+        const e = state.items.find(x=>x.id===id);
+        if(!e) return;
+        state.selectedId = id;
+
+        $("#drawerBack").classList.add("open");
+        $("#drawer").classList.add("open");
+        $("#dTitle").textContent = e.name || "Equipment";
+
+        renderDrawerPane("overview");
+      }
+
+      function closeDrawer(){
+        $("#drawerBack").classList.remove("open");
+        $("#drawer").classList.remove("open");
+      }
+
+      function renderDrawerPane(pane){
+        const e = state.items.find(x=>x.id===state.selectedId);
+        if(!e) return;
+
+        // tabs
+        $$(".tab2").forEach(t=>{
+          t.classList.toggle("active", t.dataset.pane===pane);
+        });
+
+        const ov = $("#pane-overview");
+        const ma = $("#pane-maintenance");
+        const dc = $("#pane-docs");
+
+        ov.style.display = pane==="overview" ? "block" : "none";
+        ma.style.display = pane==="maintenance" ? "block" : "none";
+        dc.style.display = pane==="docs" ? "block" : "none";
+
+        if(pane==="overview"){
+          ov.innerHTML = `
+            <div class="kv">
+              <div class="k">Status</div>
+              <div class="v">${statusTag(e.status)}</div>
+
+              <div class="k">Health</div>
+              <div class="v">${healthBadge(e.health)} <span style="margin-left:10px;color:var(--muted);font-size:12px">(0–100)</span></div>
+
+              <div class="k">Criticality</div>
+              <div class="v">${critTag(e.criticality)}</div>
+
+              <div class="k">Type</div>
+              <div class="v">${escapeHTML(e.type || "—")}</div>
+
+              <div class="k">Model</div>
+              <div class="v">${escapeHTML(e.model || "—")}</div>
+
+              <div class="k">Serial</div>
+              <div class="v">${escapeHTML(e.serial || "—")}</div>
+
+              <div class="k">Location</div>
+              <div class="v">${escapeHTML(e.location || "—")}</div>
+
+              <div class="k">Owner</div>
+              <div class="v">${escapeHTML(e.owner || "—")}</div>
+
+              <div class="k">Vendor</div>
+              <div class="v">${escapeHTML(e.vendor || "—")}</div>
+
+              <div class="k">Purchase Date</div>
+              <div class="v">${escapeHTML(e.purchaseDate || "—")}</div>
+
+              <div class="k">Warranty End</div>
+              <div class="v">${escapeHTML(e.warrantyEnd || "—")}</div>
+
+              <div class="k">PM Frequency</div>
+              <div class="v">${escapeHTML((e.pmFreq ?? "—") + "")} days</div>
+
+              <div class="k">Next PM</div>
+              <div class="v">${escapeHTML(e.pmDate || "—")}</div>
+            </div>
+
+            <div class="kv" style="grid-template-columns:1fr;gap:8px">
+              <div class="k">Notes</div>
+              <div class="v" style="white-space:pre-wrap;line-height:1.35">${escapeHTML(e.notes || "—")}</div>
+            </div>
+          `;
+        }
+
+        if(pane==="maintenance"){
+          // demo maintenance history
+          ma.innerHTML = `
+            <div class="kv" style="grid-template-columns:1fr;gap:10px">
+              <div class="k">Recent Maintenance (demo)</div>
+              <div class="v" style="font-weight:700;line-height:1.4">
+                • ${escapeHTML(e.name)} inspection — ${escapeHTML(e.pmDate || "Scheduled")}<br>
+                • Lubrication / cleaning — ${escapeHTML(e.pmFreq ? ("Every " + e.pmFreq + " days") : "—")}<br>
+                • Last issue: ${e.health<30 ? "High vibration / breakdown risk" : (e.health<60 ? "Wear observed" : "No major issues")}<br>
+                <span style="color:var(--muted);font-size:12px">Connect to your MaintenanceRequest table later.</span>
+              </div>
+            </div>
+
+            <div class="kv" style="grid-template-columns:1fr;gap:10px">
+              <div class="k">Recommended Actions</div>
+              <div class="v" style="line-height:1.4">
+                ${e.health<30 ? "🔴 Create corrective request ASAP. Check bearings, belt, oil leaks." : ""}
+                ${e.health>=30 && e.health<60 ? "🟡 Plan service this week. Check alignment, calibration." : ""}
+                ${e.health>=60 ? "🟢 Continue preventive schedule. Log checks regularly." : ""}
+              </div>
+            </div>
+          `;
+        }
+
+        if(pane==="docs"){
+          dc.innerHTML = `
+            <div class="kv" style="grid-template-columns:1fr;gap:10px">
+              <div class="k">Documents (demo)</div>
+              <div class="v" style="line-height:1.4">
+                • SOP / Manual: <span style="color:var(--blue)">Upload later</span><br>
+                • Warranty PDF: <span style="color:var(--blue)">Upload later</span><br>
+                • Compliance Checklist: <span style="color:var(--blue)">Upload later</span><br>
+                <span style="color:var(--muted);font-size:12px">Later you can store file path in DB + show links here.</span>
+              </div>
+            </div>
+          `;
+        }
+
+        // footer button states
+        $("#scrapBtn").disabled = e.status==="scrap";
+      }
+
+      // ===== Modal (Add/Edit) =====
+      function openAddModal(){
+        state.editingId = null;
+        $("#modalTitle").textContent="Add Equipment";
+        $("#deleteBtn").style.display="none";
+        $("#fId").value="";
+
+        $("#fName").value="";
+        $("#fType").value="machine";
+        $("#fModel").value="";
+        $("#fSerial").value="";
+        $("#fStatus").value="active";
+        $("#fCriticality").value="standard";
+        $("#fHealth").value=80;
+        $("#fLocation").value="";
+        $("#fOwner").value="";
+        $("#fVendor").value="";
+        $("#fPurchase").value="";
+        $("#fWarranty").value="";
+        $("#fPmFreq").value=30;
+        $("#fPmDate").value=isoDate(new Date(Date.now()+7*86400000));
+        $("#fNotes").value="";
+
+        $("#modalBack").classList.add("open");
+        setTimeout(()=>$("#fName").focus(), 50);
+      }
+
+      function openEditModal(id){
+        const e = state.items.find(x=>x.id===id);
+        if(!e) return;
+        state.editingId = id;
+
+        $("#modalTitle").textContent="Edit Equipment";
+        $("#deleteBtn").style.display="inline-flex";
+        $("#fId").value=e.id;
+
+        $("#fName").value=e.name ?? "";
+        $("#fType").value=e.type ?? "machine";
+        $("#fModel").value=e.model ?? "";
+        $("#fSerial").value=e.serial ?? "";
+        $("#fStatus").value=e.status ?? "active";
+        $("#fCriticality").value=e.criticality ?? "standard";
+        $("#fHealth").value=e.health ?? 70;
+        $("#fLocation").value=e.location ?? "";
+        $("#fOwner").value=e.owner ?? "";
+        $("#fVendor").value=e.vendor ?? "";
+        $("#fPurchase").value=e.purchaseDate ?? "";
+        $("#fWarranty").value=e.warrantyEnd ?? "";
+        $("#fPmFreq").value=e.pmFreq ?? 30;
+        $("#fPmDate").value=e.pmDate ?? "";
+        $("#fNotes").value=e.notes ?? "";
+
+        $("#modalBack").classList.add("open");
+      }
+
+      function closeModal(){
+        $("#modalBack").classList.remove("open");
+      }
+
+      function saveModal(){
+        const payload = {
+          id: $("#fId").value || uid(),
+          name: ($("#fName").value||"").trim() || "Unnamed Equipment",
+          type: $("#fType").value,
+          model: ($("#fModel").value||"").trim(),
+          serial: ($("#fSerial").value||"").trim(),
+          status: $("#fStatus").value,
+          criticality: $("#fCriticality").value,
+          health: clamp(Number($("#fHealth").value||0), 0, 100),
+          location: ($("#fLocation").value||"").trim(),
+          owner: ($("#fOwner").value||"").trim(),
+          vendor: ($("#fVendor").value||"").trim(),
+          purchaseDate: $("#fPurchase").value,
+          warrantyEnd: $("#fWarranty").value,
+          pmFreq: Number($("#fPmFreq").value||0),
+          pmDate: $("#fPmDate").value,
+          notes: ($("#fNotes").value||"").trim(),
+        };
+
+        if(state.editingId){
+          const idx = state.items.findIndex(x=>x.id===state.editingId);
+          if(idx>=0){
+            state.items[idx] = { ...state.items[idx], ...payload };
+            toast("Updated", "Equipment updated successfully.", "✅");
+          }
+        }else{
+          state.items.unshift({ ...payload, createdAt: Date.now() });
+          toast("Added", "New equipment added.", "✅");
+        }
+
+        persist();
+        closeModal();
+        renderAll();
+
+        if(state.selectedId){
+          renderDrawerPane($$(".tab2.active")[0]?.dataset.pane || "overview");
+        }
+      }
+
+      function deleteEditing(){
+        const id = state.editingId;
+        if(!id) return;
+        if(!confirm("Delete this equipment?")) return;
+
+        state.items = state.items.filter(x=>x.id!==id);
+        persist();
+        toast("Deleted", "Equipment removed.", "🗑️");
+        closeModal();
+        renderAll();
+        closeDrawer();
+      }
+
+      // ===== Actions =====
+      function toggleHold(){
+        const e = state.items.find(x=>x.id===state.selectedId);
+        if(!e) return;
+        if(e.status==="scrap"){
+          toast("Blocked", "Scrap item can't be held.", "⛔");
+          return;
+        }
+        e.status = (e.status==="maintenance_hold") ? "active" : "maintenance_hold";
+        persist();
+        renderAll();
+        renderDrawerPane($$(".tab2.active")[0]?.dataset.pane || "overview");
+        toast("Updated", "Status updated.", "✅");
+      }
+
+      function markScrap(){
+        const e = state.items.find(x=>x.id===state.selectedId);
+        if(!e) return;
+        if(!confirm("Mark this equipment as SCRAP?")) return;
+        e.status="scrap";
+        e.health = Math.min(e.health ?? 0, 10);
+        persist();
+        renderAll();
+        renderDrawerPane("overview");
+        toast("Scrap", "Equipment marked as Scrap.", "🗑️");
+      }
+
+      // ===== Toast =====
+      let toastTimer=null;
+      function toast(title,msg,icon="✅"){
+        $("#toastIcon").textContent=icon;
+        $("#toastTitle").textContent=title;
+        $("#toastMsg").textContent=msg;
+        $("#toast").classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer=setTimeout(()=>$("#toast").classList.remove("show"), 2600);
+      }
+
+      // ===== CSV Export =====
+      function exportCSV(){
+        const rows = [["Name","Type","Model","Serial","Status","Criticality","Health","Location","Owner","Vendor","PurchaseDate","WarrantyEnd","PMFreqDays","PMDate","Notes"]];
+        state.items.forEach(e=>{
+          rows.push([
+            e.name, e.type, e.model, e.serial, e.status, e.criticality, String(e.health ?? ""),
+            e.location, e.owner, e.vendor, e.purchaseDate, e.warrantyEnd, String(e.pmFreq ?? ""), e.pmDate,
+            (e.notes ?? "").replaceAll("\n"," ")
+          ]);
+        });
+        const csv = rows.map(r => r.map(cell => `"${String(cell ?? "").replaceAll('"','""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "gear-guard-equipment.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast("Exported", "Equipment CSV downloaded.", "⬇️");
+      }
+
+      // ===== KPIs Render =====
+      function renderKPIs(){
+        const k = computeKPIs();
+        $("#kTotal").textContent = String(k.all);
+        $("#kCritical").textContent = String(k.critical);
+        $("#kDueSoon").textContent = String(k.dueSoon);
+        $("#kOperational").textContent = String(k.operational);
+
+        // demo spark arrays
+        const n=12;
+        const a = Array.from({length:n}, (_,i)=> k.all + Math.round(Math.sin(i/2)*2));
+        const b = Array.from({length:n}, (_,i)=> clamp(k.critical + Math.round(Math.cos(i/2)*2), 0, 50));
+        const c = Array.from({length:n}, (_,i)=> clamp(k.dueSoon + (i%3), 0, 50));
+        const d = Array.from({length:n}, (_,i)=> clamp(k.operational + Math.round(Math.sin(i/3)*2), 0, 999));
+
+        drawSpark("spTotal", a);
+        drawSpark("spCritical", b);
+        drawSpark("spDue", c);
+        drawSpark("spOp", d);
+      }
+
+      function renderAll(){
+        updateSortIcons();
+        renderKPIs();
+        renderTable();
+        // show/hide clear icon
+        const q = ($("#searchInput").value || "").trim();
+        $("#clearSearch").style.display = q ? "block" : "none";
+      }
+
+      // ===== User dropdown =====
+      const userPill=$("#userPill");
+      const userDropdown=$("#userDropdown");
+      function closeUserMenu(){
+        userDropdown.classList.remove("open");
+        userPill.setAttribute("aria-expanded","false");
+      }
+      function toggleUserMenu(){
+        userDropdown.classList.toggle("open");
+        userPill.setAttribute("aria-expanded", userDropdown.classList.contains("open") ? "true":"false");
+      }
+      userPill.addEventListener("click", toggleUserMenu);
+      document.addEventListener("click", (e)=>{
+        if(!userDropdown.contains(e.target) && !userPill.contains(e.target)) closeUserMenu();
+      });
+      $("#logoutBtn").addEventListener("click", ()=>{
+        closeUserMenu();
+        alert("Logout clicked (demo). Connect to Django logout later.");
+      });
+      $("#profileBtn").addEventListener("click", ()=> toast("Profile", "Demo action.", "👤"));
+      $("#settingsBtn").addEventListener("click", ()=> toast("Settings", "Demo action.", "⚙️"));
+
+      // ===== Events =====
+      $("#searchInput").addEventListener("input", renderAll);
+      $("#statusFilter").addEventListener("change", renderAll);
+      $("#criticalFilter").addEventListener("change", renderAll);
+
+      $("#clearSearch").addEventListener("click", ()=>{
+        $("#searchInput").value="";
+        $("#searchInput").focus();
+        renderAll();
+      });
+
+      $("#resetBtn").addEventListener("click", ()=>{
+        $("#searchInput").value="";
+        $("#statusFilter").value="all";
+        $("#criticalFilter").value="all";
+        renderAll();
+        toast("Reset", "Filters cleared.", "🧹");
+      });
+
+      $$("thead th").forEach(th=>{
+        th.addEventListener("click", ()=> setSort(th.dataset.key));
+      });
+
+      $("#addBtn").addEventListener("click", openAddModal);
+      $("#closeModalBtn").addEventListener("click", closeModal);
+      $("#cancelBtn").addEventListener("click", closeModal);
+      $("#saveBtn").addEventListener("click", saveModal);
+      $("#deleteBtn").addEventListener("click", deleteEditing);
+      $("#modalBack").addEventListener("click", (e)=>{ if(e.target===$("#modalBack")) closeModal(); });
+
+      $("#drawerBack").addEventListener("click", closeDrawer);
+      $("#closeDrawer").addEventListener("click", closeDrawer);
+
+      $$(".tab2").forEach(t=>{
+        t.addEventListener("click", ()=> renderDrawerPane(t.dataset.pane));
+      });
+
+      $("#editBtn").addEventListener("click", ()=> openEditModal(state.selectedId));
+      $("#holdBtn").addEventListener("click", toggleHold);
+      $("#scrapBtn").addEventListener("click", markScrap);
+
+      $("#exportBtn").addEventListener("click", exportCSV);
+
+      $("#refreshBtn").addEventListener("click", ()=>{
+        renderAll();
+        toast("Refreshed", "Equipment list updated.", "🔄");
+      });
+
+      $("#toastClose").addEventListener("click", ()=> $("#toast").classList.remove("show"));
+
+      // Keyboard escape
+      document.addEventListener("keydown", (e)=>{
+        if(e.key==="Escape"){
+          closeUserMenu();
+          closeModal();
+          closeDrawer();
+        }
+      });
+
+      // ===== Init =====
+      renderAll();
+    </script>
+  </div>
+</body>
+</html>

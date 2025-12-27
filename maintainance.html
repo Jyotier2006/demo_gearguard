@@ -1,0 +1,1714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GearGuard • Maintenance Request</title>
+
+<style>
+  :root{
+    --bg:#000;
+    --panel:rgba(255,255,255,.05);
+    --panel2:rgba(255,255,255,.035);
+    --stroke:rgba(255,255,255,.14);
+    --stroke2:rgba(255,255,255,.20);
+    --text:rgba(255,255,255,.92);
+    --muted:rgba(255,255,255,.62);
+    --muted2:rgba(255,255,255,.46);
+
+    --blue:#7aa7ff;
+    --good:#33d17a;
+    --warn:#f5c542;
+    --bad:#ff4d4d;
+
+    --radius:18px;
+    --radius2:14px;
+    --shadow:0 22px 55px rgba(0,0,0,.65);
+
+    --focus:0 0 0 4px rgba(122,167,255,.16);
+
+    --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:var(--font);
+    color:var(--text);
+    background:var(--bg);
+    overflow-x:hidden;
+  }
+
+  /* subtle tech overlay */
+  body:before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(122,167,255,.10), transparent 60%),
+      radial-gradient(1000px 700px at 90% 0%, rgba(51,209,122,.07), transparent 60%),
+      radial-gradient(900px 600px at 70% 120%, rgba(255,77,77,.06), transparent 60%);
+    opacity:.55;
+    z-index:0;
+  }
+  body:after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 58px 58px;
+    opacity:.07;
+    z-index:0;
+  }
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    width:min(1260px, calc(100% - 32px));
+    margin: 22px auto 40px;
+  }
+
+  /* Top mini navbar */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 16px;
+    border:1px solid var(--stroke);
+    border-radius:24px;
+    background:rgba(10,12,22,.70);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width: 240px;
+  }
+  .logo{
+    width:42px;height:42px;border-radius:16px;
+    border:1px solid rgba(255,255,255,.18);
+    background:
+      radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.22), transparent 60%),
+      linear-gradient(135deg, rgba(122,167,255,.86), rgba(51,209,122,.70));
+    display:grid;place-items:center;
+    overflow:hidden;
+  }
+  .logo img{width:100%;height:100%;object-fit:contain;display:block}
+  .brand h1{margin:0;font-size:14px;font-weight:900;letter-spacing:.2px}
+  .brand small{display:block;color:var(--muted);margin-top:2px;font-size:12px}
+
+  .nav{
+    display:flex; gap:8px; flex:1; overflow:auto hidden;
+    scrollbar-width:none;
+  }
+  .nav::-webkit-scrollbar{display:none}
+  .tab{
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--muted);
+    padding:9px 12px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:.15s ease;
+    white-space:nowrap;
+    font-size:13px;
+  }
+  .tab:hover{background:rgba(255,255,255,.06);color:var(--text);border-color:rgba(255,255,255,.08)}
+  .tab.active{
+    background:rgba(122,167,255,.14);
+    border-color:rgba(122,167,255,.32);
+    color:var(--text);
+  }
+
+  .top-actions{display:flex;align-items:center;gap:10px}
+  .iconbtn{
+    width:42px;height:42px;border-radius:16px;
+    border:1px solid var(--stroke);
+    background:rgba(255,255,255,.04);
+    color:var(--text);
+    cursor:pointer;
+    display:grid;place-items:center;
+    transition:.15s ease;
+  }
+  .iconbtn:hover{transform:translateY(-1px);border-color:var(--stroke2);background:rgba(255,255,255,.06)}
+  .btn{
+    height:42px;
+    padding:0 12px;
+    border-radius:16px;
+    border:1px solid var(--stroke);
+    background:rgba(255,255,255,.04);
+    color:var(--text);
+    cursor:pointer;
+    transition:.15s ease;
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;
+  }
+  .btn:hover{transform:translateY(-1px);border-color:var(--stroke2);background:rgba(255,255,255,.06)}
+  .btn.primary{border-color:rgba(122,167,255,.34);background:rgba(122,167,255,.14)}
+  .btn.good{border-color:rgba(51,209,122,.34);background:rgba(51,209,122,.14)}
+  .btn.bad{border-color:rgba(255,77,77,.34);background:rgba(255,77,77,.12);color:#ffd0d0}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+  /* Page shell */
+  .page{
+    margin-top:16px;
+    border:1px solid var(--stroke);
+    border-radius:24px;
+    background:rgba(10,12,22,.70);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+
+  .page-head{
+    padding:16px 16px 14px;
+    border-bottom:1px dashed rgba(255,255,255,.22);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+
+  .leftHead{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+  }
+
+  .statusBadge{
+    padding:8px 14px;
+    border-radius:18px;
+    border:1px dashed rgba(255,255,255,.24);
+    background:rgba(255,255,255,.03);
+    font-weight:900;
+    letter-spacing:.2px;
+    height: fit-content;
+  }
+  .statusBadge.new{border-color:rgba(122,167,255,.55);color:rgba(122,167,255,1)}
+  .statusBadge.in_progress{border-color:rgba(245,197,66,.55);color:rgba(245,197,66,1)}
+  .statusBadge.repaired{border-color:rgba(51,209,122,.55);color:rgba(51,209,122,1)}
+  .statusBadge.scrap{border-color:rgba(255,77,77,.55);color:rgba(255,77,77,1)}
+
+  .crumb{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:2px;
+  }
+  .crumb b{color:var(--text)}
+  .headActions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .flow{
+    width:min(720px,100%);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:18px;
+    border:1px dashed rgba(255,255,255,.22);
+    background:rgba(255,255,255,.02);
+  }
+  .step{
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.14);
+    color:var(--muted);
+    background:rgba(255,255,255,.03);
+    cursor:pointer;
+    transition:.15s ease;
+    user-select:none;
+    white-space:nowrap;
+    font-size:13px;
+  }
+  .step:hover{border-color:rgba(255,255,255,.20);background:rgba(255,255,255,.05);transform:translateY(-1px)}
+  .step.active{border-color:rgba(122,167,255,.40);background:rgba(122,167,255,.12);color:var(--text)}
+  .arrow{color:rgba(255,255,255,.35);font-weight:900}
+
+  .page-body{
+    padding:18px 16px 16px;
+  }
+
+  .subjectWrap{
+    display:grid;
+    gap:6px;
+    margin: 2px 0 18px;
+  }
+  .subjectWrap small{color:var(--muted);font-size:13px}
+  .subjectInput{
+    font-size:40px;
+    font-weight:950;
+    letter-spacing:.2px;
+    background:transparent;
+    border:none;
+    color:var(--text);
+    outline:none;
+    padding:0;
+  }
+  .subjectInput::placeholder{color:rgba(255,255,255,.30)}
+  .subjectInput:focus{box-shadow:none}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:22px;
+  }
+
+  .card{
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);
+    border-radius:18px;
+    padding:14px 14px;
+  }
+
+  .row2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px;
+  }
+  .field{
+    display:grid;
+    gap:6px;
+  }
+  .field label{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .input, .select, .text{
+    height:44px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(0,0,0,.35);
+    color:var(--text);
+    padding:0 12px;
+    outline:none;
+    transition:.14s ease;
+    box-shadow: 0 10px 24px rgba(0,0,0,.22);
+  }
+  .text{
+    height:auto;
+    min-height:120px;
+    padding:10px 12px;
+    resize: vertical;
+    line-height:1.35;
+  }
+  .input:focus, .select:focus, .text:focus{
+    border-color:rgba(122,167,255,.55);
+    box-shadow: var(--focus);
+  }
+
+  .lineValue{
+    height:44px;
+    display:flex;
+    align-items:center;
+    border-bottom:1px solid rgba(255,255,255,.18);
+    padding:0 2px;
+    color:rgba(255,255,255,.90);
+    font-weight:800;
+  }
+
+  .radioRow{
+    display:flex; gap:18px; align-items:center; flex-wrap:wrap;
+    padding:8px 0 4px;
+  }
+  .radio{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);
+    padding:8px 10px;
+    border-radius:999px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .radio input{accent-color: var(--blue)}
+  .radio span{color:rgba(255,255,255,.86);font-size:13px;font-weight:800}
+
+  .priorityRow{
+    display:flex; gap:10px; align-items:center;
+  }
+  .diamond{
+    width:18px;height:18px;
+    transform: rotate(45deg);
+    border-radius:3px;
+    border:1px solid rgba(255,255,255,.22);
+    background: transparent;
+    cursor:pointer;
+    transition:.12s ease;
+  }
+  .diamond.active{
+    background: rgba(122,167,255,.95);
+    border-color: rgba(122,167,255,1);
+    box-shadow: 0 0 0 3px rgba(122,167,255,.18);
+  }
+  .prioHint{color:var(--muted);font-size:12px}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);
+    padding:8px 10px;
+    border-radius:999px;
+    color:rgba(255,255,255,.85);
+    font-size:13px;
+    font-weight:800;
+  }
+
+  .footerTabs{
+    margin-top:16px;
+    border-top:1px dashed rgba(255,255,255,.20);
+    padding-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .tabs{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .tabBtn{
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.03);
+    color:rgba(255,255,255,.88);
+    padding:8px 12px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:.14s ease;
+    font-weight:900;
+    font-size:13px;
+  }
+  .tabBtn.active{
+    background:rgba(122,167,255,.14);
+    border-color:rgba(122,167,255,.32);
+  }
+
+  .tabPanel{
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.02);
+    border-radius:18px;
+    padding:12px;
+  }
+
+  .metaBar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .saved{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  /* Drawer modal */
+  .backdrop{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(0,0,0,.58);
+    z-index:200;
+  }
+  .backdrop.open{display:flex}
+  .modal{
+    width:min(720px,100%);
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(10,12,22,.96);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .mhead{
+    padding:14px 14px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .mhead b{font-size:14px}
+  .mbody{padding:14px 14px;display:grid;gap:12px}
+  .mfoot{
+    padding:12px 14px;
+    border-top:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.02);
+    display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+  }
+
+  /* Toast */
+  .toast{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    width:min(420px, calc(100% - 36px));
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(10,12,22,.94);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    padding:12px;
+    display:none;
+    gap:10px;
+    align-items:flex-start;
+    z-index:300;
+  }
+  .toast.show{display:flex}
+  .ticon{
+    width:36px;height:36px;border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.06);
+    display:grid;place-items:center;
+    flex:0 0 auto;
+  }
+  .toast b{display:block;font-size:13px}
+  .toast small{display:block;color:var(--muted);margin-top:2px;line-height:1.3}
+  .tclose{
+    margin-left:auto;
+    width:36px;height:36px;border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(255,255,255,.03);
+    color:var(--text);
+    cursor:pointer;
+  }
+
+  /* Responsive */
+  @media (max-width: 960px){
+    .grid{grid-template-columns:1fr}
+    .row2{grid-template-columns:1fr}
+    .subjectInput{font-size:34px}
+    .flow{flex-wrap:wrap}
+  }
+      .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- Topbar (link back to main dashboard) -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" title="GearGuard">
+          <!-- optional: if you have logo.png in same folder -->
+          <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+        </div>
+        <div>
+          <h1>GearGuard</h1>
+          <small>Maintenance Request</small>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Primary">
+          <a href="{% url 'maintainance' %}" style="text-decoration:none">
+    <button class="tab" data-tab="maintenance">Maintenance</button>
+  </a>
+          <a href="{% url 'dashboard' %}" style="text-decoration:none">
+    <button class="tab" data-tab="dashboard">Dashboard</button>
+  </a>
+           <a href="{% url 'maintenance_calendar' %}" style="text-decoration:none">
+    <button class="tab" data-tab="mainenance_calendar">Maintenance Calendar</button>
+  </a>
+  <a href="{% url 'equipment' %}" style="text-decoration:none">
+    <button class="tab" data-tab="equipment">Equipment</button>
+  </a>
+  <a href="{% url 'reporting' %}" style="text-decoration:none">
+    <button class="tab" data-tab="reporting">Reporting</button>
+  </a>
+  <a href="{% url 'teams' %}" style="text-decoration:none">
+    <button class="tab" data-tab="teams">Teams</button>
+  </a>
+     
+        </nav>
+      <div class="top-actions">
+        <button class="iconbtn" id="copyLink" title="Copy link">
+          🔗
+        </button>
+        <button class="iconbtn" id="resetBtn" title="Reset this page data">
+          🔄
+        </button>
+        <button class="btn primary" id="saveBtnTop">💾 Save</button>
+      </div>
+    </div>
+
+    <div class="page">
+      <!-- HEADER -->
+      <div class="page-head">
+        <div class="leftHead">
+          <div class="statusBadge new" id="statusBadge">New</div>
+          <div>
+            <div class="crumb">Maintenance Requests → <b id="crumbTitle">Test activity</b></div>
+            <div class="flow" title="Click to move stages">
+              <div class="step active" data-stage="new">New Request</div>
+              <div class="arrow">›</div>
+              <div class="step" data-stage="in_progress">In Progress</div>
+              <div class="arrow">›</div>
+              <div class="step" data-stage="repaired">Repaired</div>
+              <div class="arrow">›</div>
+              <div class="step" data-stage="scrap">Scrap</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="headActions">
+          <button class="btn" id="worksheetBtn" title="Open worksheet (demo)">📝 Worksheet</button>
+          <button class="btn" id="assignSelfBtn" title="Assign technician to current user">👤 Assign to me</button>
+          <button class="btn good" id="startStopBtn" title="Start/Stop work timer">⏱ Start</button>
+          <button class="btn" id="exportBtn" title="Export this request as JSON">⬇ Export</button>
+          <button class="btn bad" id="deleteBtn" title="Delete this request">🗑 Delete</button>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <!-- SUBJECT -->
+        <div class="subjectWrap">
+          <small>Subject?</small>
+          <input class="subjectInput" id="subject" placeholder="Test activity" />
+        </div>
+
+        <div class="grid">
+          <!-- LEFT CARD -->
+          <div class="card">
+            <div class="row2">
+              <div class="field">
+                <label>Created By</label>
+                <div class="lineValue" id="createdBy">Mitchell Admin</div>
+              </div>
+              <div class="field">
+                <label>Request Date</label>
+                <input class="input" type="date" id="requestDate">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Maintenance For (Equipment)</label>
+                <select class="select" id="equipmentSelect"></select>
+              </div>
+              <div class="field">
+                <label>Category</label>
+                <div class="lineValue" id="categoryLine">Computers</div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Maintenance Type</label>
+              <div class="radioRow">
+                <label class="radio">
+                  <input type="radio" name="mtype" value="corrective" checked />
+                  <span>Corrective</span>
+                </label>
+                <label class="radio">
+                  <input type="radio" name="mtype" value="preventive" />
+                  <span>Preventive</span>
+                </label>
+              </div>
+              <div style="color:var(--muted2);font-size:12px;line-height:1.35">
+                Corrective = breakdown/unplanned repair. Preventive = routine scheduled maintenance (will show on calendar later).
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Equipment Owner (Employee)</label>
+                <input class="input" id="employee" placeholder="Mitchell Admin">
+              </div>
+              <div class="field">
+                <label>Serial Number</label>
+                <input class="input" id="serial" placeholder="Auto-filled">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Purchase Date</label>
+                <input class="input" type="date" id="purchaseDate">
+              </div>
+              <div class="field">
+                <label>Warranty (months)</label>
+                <input class="input" type="number" min="0" step="1" id="warrantyMonths" placeholder="e.g. 12">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Location</label>
+                <input class="input" id="location" placeholder="e.g. Floor 2, IT Room">
+              </div>
+              <div class="field">
+                <label>Equipment Health (%)</label>
+                <input class="input" type="number" min="0" max="100" step="1" id="health" placeholder="0-100">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT CARD -->
+          <div class="card">
+            <div class="row2">
+              <div class="field">
+                <label>Team</label>
+                <select class="select" id="teamSelect"></select>
+              </div>
+              <div class="field">
+                <label>Technician</label>
+                <select class="select" id="techSelect"></select>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Scheduled Date?</label>
+                <input class="input" type="datetime-local" id="scheduledAt">
+              </div>
+              <div class="field">
+                <label>Duration (hours)</label>
+                <input class="input" type="text" id="duration" readonly>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Priority</label>
+              <div class="priorityRow" id="priorityRow" aria-label="Priority">
+                <div class="diamond" data-p="1" title="Low"></div>
+                <div class="diamond" data-p="2" title="Medium"></div>
+                <div class="diamond" data-p="3" title="High"></div>
+              </div>
+              <div class="prioHint" id="prioHint">Click diamonds to set priority.</div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Company</label>
+                <input class="input" id="company" placeholder="My Company (San Francisco)">
+              </div>
+              <div class="field">
+                <label>Overdue?</label>
+                <div class="pill" id="overduePill">✅ On time</div>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label>Work Started At</label>
+                <input class="input" id="workStartAt" readonly placeholder="—">
+              </div>
+              <div class="field">
+                <label>Work Ended At</label>
+                <input class="input" id="workEndAt" readonly placeholder="—">
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <button class="btn primary" id="moveProgressBtn">Move → In Progress</button>
+              <button class="btn good" id="moveRepairedBtn">Move → Repaired</button>
+              <button class="btn bad" id="moveScrapBtn">Move → Scrap</button>
+            </div>
+
+            <div style="margin-top:10px;color:var(--muted2);font-size:12px;line-height:1.35">
+              Scrap logic: if moved to Scrap, this page marks the equipment as <b>unusable</b> and logs a note automatically.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="footerTabs">
+          <div class="metaBar">
+            <div class="tabs">
+              <button class="tabBtn active" data-tab="notes">Notes</button>
+              <button class="tabBtn" data-tab="instructions">Instructions</button>
+              <button class="tabBtn" data-tab="activity">Activity Log</button>
+            </div>
+            <div class="saved" id="saveStatus">Not saved yet</div>
+          </div>
+
+          <div class="tabPanel" id="tab_notes">
+            <textarea class="text" id="notes" placeholder="Write notes... (saved locally)"></textarea>
+          </div>
+
+          <div class="tabPanel" id="tab_instructions" style="display:none">
+            <textarea class="text" id="instructions" placeholder="Write step-by-step instructions for technician..."></textarea>
+          </div>
+
+          <div class="tabPanel" id="tab_activity" style="display:none">
+            <div id="activityLog" style="display:grid;gap:10px;color:var(--muted);font-size:13px;line-height:1.4"></div>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+            <button class="btn" id="discardBtn">↩ Discard changes</button>
+            <button class="btn primary" id="saveBtnBottom">💾 Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worksheet modal -->
+  <div class="backdrop" id="wsBack">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="mhead">
+        <b>Worksheet</b>
+        <button class="iconbtn" id="wsClose" style="width:40px;height:40px" title="Close">✕</button>
+      </div>
+      <div class="mbody">
+        <div style="color:var(--muted);font-size:13px;line-height:1.4">
+          This is a working area for the technician.<br>
+          In Django, you can connect this to a proper worksheet model (steps, parts used, photos, signatures).
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Work summary</label>
+            <input class="input" id="wsSummary" placeholder="What was fixed?">
+          </div>
+          <div class="field">
+            <label>Parts used</label>
+            <input class="input" id="wsParts" placeholder="e.g. Belt, Fuse, Toner">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Technician remark</label>
+          <textarea class="text" id="wsRemark" placeholder="Detailed remark..."></textarea>
+        </div>
+      </div>
+      <div class="mfoot">
+        <button class="btn" id="wsCancel">Cancel</button>
+        <button class="btn primary" id="wsSave">Save Worksheet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="ticon" id="ticon">✅</div>
+    <div>
+      <b id="ttitle">Saved</b>
+      <small id="tmsg">Action completed.</small>
+    </div>
+    <button class="tclose" id="tclose" title="Close">✕</button>
+  </div>
+
+<script>
+/* ===========================
+   FULLY WORKING LOGIC
+   =========================== */
+
+/* Demo equipment/team DB (replace with Django later) */
+const demoEquipment = [
+  {
+    id:"eq1",
+    name:"Acer Laptop / LP / 203 / 19281928",
+    category:"Computers",
+    serial:"LP-203-19281928",
+    owner:"Mitchell Admin",
+    location:"IT Room",
+    purchaseDate:"2025-12-01",
+    warrantyMonths:12,
+    health:55,
+    teamId:"t_it",
+    defaultTech:"u_aka"
+  },
+  {
+    id:"eq2",
+    name:"Printer 01",
+    category:"IT",
+    serial:"PR-01-77821",
+    owner:"Ops Desk",
+    location:"Reception",
+    purchaseDate:"2024-06-10",
+    warrantyMonths:18,
+    health:25,
+    teamId:"t_it",
+    defaultTech:"u_riya"
+  },
+  {
+    id:"eq3",
+    name:"CNC Machine A",
+    category:"Mechanical",
+    serial:"CNC-A-3001",
+    owner:"Production",
+    location:"Plant 1",
+    purchaseDate:"2023-03-18",
+    warrantyMonths:24,
+    health:40,
+    teamId:"t_mech",
+    defaultTech:"u_karan"
+  }
+];
+
+const demoTeams = [
+  { id:"t_mech", name:"Internal Maintenance (Mechanical)", members:[
+    {id:"u_karan", name:"Karan Mehta"},
+    {id:"u_neel", name:"Neel Shah"},
+  ]},
+  { id:"t_it", name:"Internal Maintenance (IT)", members:[
+    {id:"u_aka", name:"Aka Foster"},
+    {id:"u_riya", name:"Riya Patel"},
+  ]},
+  { id:"t_elec", name:"Internal Maintenance (Electrical)", members:[
+    {id:"u_iman", name:"Iman Khan"},
+    {id:"u_sara", name:"Sara Ali"},
+  ]}
+];
+
+/* Current user (demo) */
+const CURRENT_USER = { id:"u_aka", name:"Aka Foster" };
+
+/* Storage key for this page */
+const STORAGE_KEY = "gg_single_request_v1";
+
+/* Helpers */
+const $ = (q)=>document.querySelector(q);
+const $$ = (q)=>[...document.querySelectorAll(q)];
+const nowISO = ()=> new Date().toISOString();
+const pad2 = (n)=>String(n).padStart(2,"0");
+const fmtDT = (iso)=>{
+  if(!iso) return "—";
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+};
+function toast(title,msg,icon="✅"){
+  $("#ticon").textContent = icon;
+  $("#ttitle").textContent = title;
+  $("#tmsg").textContent = msg;
+  $("#toast").classList.add("show");
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>$("#toast").classList.remove("show"), 2600);
+}
+$("#tclose").addEventListener("click", ()=>$("#toast").classList.remove("show"));
+
+function saveLocal(obj){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  $("#saveStatus").textContent = "Saved just now";
+}
+function loadLocal(){
+  try{
+    const v = localStorage.getItem(STORAGE_KEY);
+    return v ? JSON.parse(v) : null;
+  }catch{
+    return null;
+  }
+}
+function clone(x){ return JSON.parse(JSON.stringify(x)); }
+
+/* Request state */
+const defaultRequest = () => ({
+  id: "req_1",
+  stage: "new",
+  subject: "Test activity",
+  createdBy: "Mitchell Admin",
+  requestDate: new Date().toISOString().slice(0,10),
+
+  equipmentId: "eq1",
+  category: "Computers",
+  employee: "Mitchell Admin",
+  serial: "LP-203-19281928",
+  purchaseDate: "2025-12-01",
+  warrantyMonths: 12,
+  location:"IT Room",
+  health: 55,
+
+  type: "corrective", /* corrective/preventive */
+
+  teamId: "t_it",
+  technicianId: "u_aka",
+
+  scheduledAt: "2025-12-28T14:30",
+  durationMinutes: 0,
+
+  priority: 2, /* 0-3 */
+  company: "My Company (San Francisco)",
+
+  unusable: false,
+
+  notes: "",
+  instructions: "",
+  worksheet: { summary:"", parts:"", remark:"" },
+
+  timer: { running:false, startAt:null, endAt:null },
+
+  activity: [
+    { at: nowISO(), text: "Request created." }
+  ]
+});
+
+let state = loadLocal() || defaultRequest();
+let baseline = clone(state); // used for Discard changes
+
+/* ===========================
+   DOM populate
+   =========================== */
+function populateSelects(){
+  // equipment select
+  const eqSel = $("#equipmentSelect");
+  eqSel.innerHTML = "";
+  demoEquipment.forEach(eq=>{
+    const opt = document.createElement("option");
+    opt.value = eq.id;
+    opt.textContent = eq.name;
+    eqSel.appendChild(opt);
+  });
+
+  // team select
+  const teamSel = $("#teamSelect");
+  teamSel.innerHTML = "";
+  demoTeams.forEach(t=>{
+    const opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.name;
+    teamSel.appendChild(opt);
+  });
+
+  // technician select depends on team
+  refreshTechList();
+}
+
+function refreshTechList(){
+  const techSel = $("#techSelect");
+  techSel.innerHTML = "";
+  const team = demoTeams.find(t=>t.id===$("#teamSelect").value);
+  const members = team ? team.members : [];
+
+  members.forEach(m=>{
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.name;
+    techSel.appendChild(opt);
+  });
+
+  // keep current selection if still exists
+  const still = members.some(m=>m.id===state.technicianId);
+  if(still) techSel.value = state.technicianId;
+  else if(members[0]) {
+    state.technicianId = members[0].id;
+    techSel.value = members[0].id;
+  }
+}
+
+/* Apply state to UI */
+function render(){
+  // subject & crumb
+  $("#subject").value = state.subject || "";
+  $("#crumbTitle").textContent = state.subject || "Request";
+
+  // badge + flow
+  updateStageUI();
+
+  // left fields
+  $("#createdBy").textContent = state.createdBy || "—";
+  $("#requestDate").value = state.requestDate || "";
+
+  $("#equipmentSelect").value = state.equipmentId;
+  $("#categoryLine").textContent = state.category || "—";
+  $("#employee").value = state.employee || "";
+  $("#serial").value = state.serial || "";
+  $("#purchaseDate").value = state.purchaseDate || "";
+  $("#warrantyMonths").value = (state.warrantyMonths ?? "");
+  $("#location").value = state.location || "";
+  $("#health").value = (state.health ?? "");
+
+  // type radios
+  $$('input[name="mtype"]').forEach(r=>{
+    r.checked = (r.value === state.type);
+  });
+
+  // right fields
+  $("#teamSelect").value = state.teamId;
+  refreshTechList();
+  $("#techSelect").value = state.technicianId;
+
+  $("#scheduledAt").value = state.scheduledAt || "";
+  $("#duration").value = minutesToHHMM(state.durationMinutes || 0);
+
+  // priority
+  updatePriorityUI();
+
+  $("#company").value = state.company || "";
+  updateOverdueUI();
+
+  // timer fields
+  $("#workStartAt").value = state.timer.startAt ? fmtDT(state.timer.startAt) : "";
+  $("#workEndAt").value = state.timer.endAt ? fmtDT(state.timer.endAt) : "";
+
+  // tabs text
+  $("#notes").value = state.notes || "";
+  $("#instructions").value = state.instructions || "";
+
+  // worksheet fields (modal)
+  $("#wsSummary").value = state.worksheet?.summary || "";
+  $("#wsParts").value = state.worksheet?.parts || "";
+  $("#wsRemark").value = state.worksheet?.remark || "";
+
+  // activity log
+  renderActivity();
+
+  // buttons availability
+  updateActionButtons();
+
+  // save status
+  $("#saveStatus").textContent = isDirty() ? "Unsaved changes" : "Saved";
+}
+
+/* ===========================
+   Stage / Workflow
+   =========================== */
+function stageLabel(s){
+  if(s==="new") return "New";
+  if(s==="in_progress") return "In Progress";
+  if(s==="repaired") return "Repaired";
+  if(s==="scrap") return "Scrap";
+  return s;
+}
+function updateStageUI(){
+  // badge class
+  const badge = $("#statusBadge");
+  badge.className = "statusBadge " + state.stage;
+  badge.textContent = stageLabel(state.stage);
+
+  // steps active
+  $$(".step").forEach(st=>{
+    st.classList.toggle("active", st.dataset.stage===state.stage);
+  });
+
+  // if scrap show extra warning in badge text
+  if(state.stage==="scrap"){
+    badge.textContent = "Scrap • Unusable";
+  }
+}
+function moveStage(next){
+  if(state.stage === next) return;
+
+  // guard: cannot move repaired -> in_progress without confirm
+  const order = ["new","in_progress","repaired","scrap"];
+  const curIdx = order.indexOf(state.stage);
+  const nextIdx = order.indexOf(next);
+
+  if(nextIdx < curIdx){
+    if(!confirm(`Move backward from "${stageLabel(state.stage)}" to "${stageLabel(next)}"?`)) return;
+  }
+
+  state.stage = next;
+
+  // scrap logic
+  if(next==="scrap"){
+    state.unusable = true;
+    appendActivity("Moved to Scrap — equipment marked unusable.");
+    state.notes = (state.notes ? state.notes + "\n\n" : "") + "⚠ Equipment marked unusable due to Scrap stage.";
+    toast("Scrap", "Moved to Scrap. Equipment marked unusable.", "🗑️");
+  }else{
+    // if leaving scrap, unmark (ask)
+    if(state.unusable && next!=="scrap"){
+      if(confirm("This request was Scrap/unusable. Mark equipment usable again?")){
+        state.unusable = false;
+        appendActivity("Equipment marked usable again.");
+      }
+    }
+    appendActivity(`Stage changed to ${stageLabel(next)}.`);
+    toast("Stage updated", `Now: ${stageLabel(next)}`, "✅");
+  }
+
+  // auto timer behavior
+  if(next==="in_progress" && !state.timer.startAt){
+    state.timer.startAt = nowISO();
+    appendActivity("Work started (auto).");
+  }
+  if(next==="repaired"){
+    if(state.timer.running){
+      stopTimer();
+    }
+    if(!state.timer.endAt) state.timer.endAt = nowISO();
+    appendActivity("Work completed.");
+  }
+
+  updateStageUI();
+  updateActionButtons();
+  updateOverdueUI();
+  markDirty();
+}
+
+/* ===========================
+   Equipment auto-fill logic (PS requirement)
+   When user selects equipment:
+   - auto-fill category
+   - auto-fill maintenance team
+   - auto-fill default technician
+   - fill serial/owner/location/purchase/warranty/health
+   =========================== */
+function applyEquipment(eqId){
+  const eq = demoEquipment.find(e=>e.id===eqId);
+  if(!eq) return;
+
+  state.equipmentId = eq.id;
+  state.category = eq.category;
+  state.teamId = eq.teamId;
+  state.technicianId = eq.defaultTech;
+
+  state.serial = eq.serial || "";
+  state.employee = eq.owner || "";
+  state.location = eq.location || "";
+  state.purchaseDate = eq.purchaseDate || "";
+  state.warrantyMonths = eq.warrantyMonths ?? "";
+  state.health = eq.health ?? "";
+
+  appendActivity(`Equipment selected: ${eq.name} (auto-filled team/category/tech).`);
+  toast("Auto-fill", "Equipment details + Team + Technician auto-filled.", "🧠");
+
+  // update UI
+  $("#categoryLine").textContent = state.category;
+  $("#teamSelect").value = state.teamId;
+  refreshTechList();
+  $("#techSelect").value = state.technicianId;
+
+  $("#serial").value = state.serial;
+  $("#employee").value = state.employee;
+  $("#location").value = state.location;
+  $("#purchaseDate").value = state.purchaseDate;
+  $("#warrantyMonths").value = state.warrantyMonths;
+  $("#health").value = state.health;
+
+  updateOverdueUI();
+  markDirty();
+}
+
+/* ===========================
+   Priority
+   =========================== */
+function updatePriorityUI(){
+  const p = state.priority || 0;
+  $$("#priorityRow .diamond").forEach(d=>{
+    const v = Number(d.dataset.p);
+    d.classList.toggle("active", v <= p);
+  });
+
+  const hint = $("#prioHint");
+  if(p===0) hint.textContent = "Priority not set.";
+  if(p===1) hint.textContent = "Low priority.";
+  if(p===2) hint.textContent = "Medium priority.";
+  if(p===3) hint.textContent = "High priority.";
+}
+function setPriority(p){
+  state.priority = p;
+  appendActivity(`Priority set to ${p}/3.`);
+  updatePriorityUI();
+  toast("Priority", `Set to ${p}/3`, "💠");
+  markDirty();
+}
+
+/* ===========================
+   Overdue logic (visual indicator)
+   =========================== */
+function isOverdue(){
+  if(!state.scheduledAt) return false;
+  if(state.stage==="repaired" || state.stage==="scrap") return false;
+
+  const due = new Date(state.scheduledAt);
+  const now = new Date();
+  return due.getTime() < now.getTime();
+}
+function updateOverdueUI(){
+  const pill = $("#overduePill");
+  const overdue = isOverdue();
+  pill.textContent = overdue ? "⛔ Overdue" : "✅ On time";
+  pill.style.borderColor = overdue ? "rgba(255,77,77,.35)" : "rgba(51,209,122,.30)";
+  pill.style.background = overdue ? "rgba(255,77,77,.10)" : "rgba(51,209,122,.10)";
+  pill.style.color = overdue ? "#ffd0d0" : "rgba(255,255,255,.88)";
+
+  // critical health visual toast (optional)
+  if(Number(state.health) < 30){
+    // keep silent unless stage new/in_progress
+  }
+}
+
+/* ===========================
+   Timer: Start/Stop + duration tracking
+   - durationMinutes increases while running (every 60s tick)
+   =========================== */
+let timerTick = null;
+
+function minutesToHHMM(mins){
+  const h = Math.floor(mins/60);
+  const m = mins % 60;
+  return `${pad2(h)}:${pad2(m)} hours`;
+}
+
+function startTimer(){
+  if(state.timer.running) return;
+  state.timer.running = true;
+  if(!state.timer.startAt) state.timer.startAt = nowISO();
+  state.timer.endAt = null;
+
+  $("#startStopBtn").textContent = "⏹ Stop";
+  $("#startStopBtn").classList.remove("good");
+  $("#startStopBtn").classList.add("warn");
+  $("#startStopBtn").style.borderColor = "rgba(245,197,66,.35)";
+  $("#startStopBtn").style.background = "rgba(245,197,66,.12)";
+
+  appendActivity("Timer started.");
+  toast("Timer", "Work timer started.", "⏱️");
+
+  clearInterval(timerTick);
+  timerTick = setInterval(()=>{
+    // add 1 minute each minute
+    state.durationMinutes = (state.durationMinutes||0) + 1;
+    $("#duration").value = minutesToHHMM(state.durationMinutes);
+    $("#saveStatus").textContent = "Unsaved changes";
+  }, 60000);
+
+  // immediate UI update
+  $("#workStartAt").value = fmtDT(state.timer.startAt);
+  $("#workEndAt").value = "";
+  markDirty(false); // don't spam activity as dirty every tick
+}
+
+function stopTimer(){
+  if(!state.timer.running) return;
+  state.timer.running = false;
+  state.timer.endAt = nowISO();
+
+  $("#startStopBtn").textContent = "⏱ Start";
+  $("#startStopBtn").classList.remove("warn");
+  $("#startStopBtn").classList.add("good");
+  $("#startStopBtn").style.borderColor = "";
+  $("#startStopBtn").style.background = "";
+
+  appendActivity("Timer stopped.");
+  toast("Timer", "Work timer stopped.", "⏹️");
+
+  clearInterval(timerTick);
+  timerTick = null;
+
+  $("#workEndAt").value = fmtDT(state.timer.endAt);
+  markDirty();
+}
+
+/* ===========================
+   Activity log
+   =========================== */
+function appendActivity(text){
+  state.activity = state.activity || [];
+  state.activity.unshift({ at: nowISO(), text });
+  renderActivity();
+}
+function renderActivity(){
+  const host = $("#activityLog");
+  const list = state.activity || [];
+  if(list.length===0){
+    host.innerHTML = `<div style="color:var(--muted)">No activity yet.</div>`;
+    return;
+  }
+  host.innerHTML = list.slice(0,30).map(a=>{
+    const d = new Date(a.at);
+    const t = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    return `
+      <div style="display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:10px;border-radius:14px">
+        <div style="min-width:150px;color:rgba(255,255,255,.55);font-size:12px">${t}</div>
+        <div style="color:rgba(255,255,255,.82)">${escapeHTML(a.text)}</div>
+      </div>
+    `;
+  }).join("");
+}
+function escapeHTML(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* ===========================
+   Dirty tracking (for Discard)
+   =========================== */
+function isDirty(){
+  return JSON.stringify(state) !== JSON.stringify(baseline);
+}
+function markDirty(showToast=true){
+  $("#saveStatus").textContent = "Unsaved changes";
+  if(showToast) {
+    // don't toast on every keystroke; keep subtle.
+  }
+}
+function commitBaseline(){
+  baseline = clone(state);
+}
+
+/* ===========================
+   Validation
+   =========================== */
+function validate(){
+  const errs = [];
+  if(!state.subject || !state.subject.trim()) errs.push("Subject is required.");
+  if(!state.equipmentId) errs.push("Equipment is required.");
+  if(!state.teamId) errs.push("Team is required.");
+  if(!state.technicianId) errs.push("Technician is required.");
+  // preventive should have scheduled date
+  if(state.type==="preventive" && !state.scheduledAt) errs.push("Preventive request must have a Scheduled Date.");
+  // health range
+  const h = Number(state.health);
+  if(Number.isFinite(h) && (h<0 || h>100)) errs.push("Equipment health must be between 0 and 100.");
+
+  return errs;
+}
+
+/* ===========================
+   Save / Export / Delete
+   =========================== */
+function save(){
+  const errs = validate();
+  if(errs.length){
+    toast("Fix required", errs[0], "⚠️");
+    alert("Please fix:\n\n- " + errs.join("\n- "));
+    return;
+  }
+  saveLocal(state);
+  commitBaseline();
+  toast("Saved", "Maintenance request saved locally.", "💾");
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url;
+  a.download = "maintenance_request.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast("Exported", "Downloaded JSON file.", "⬇️");
+}
+
+function del(){
+  if(!confirm("Delete this request?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = defaultRequest();
+  baseline = clone(state);
+  populateSelects();
+  render();
+  toast("Deleted", "Request deleted and reset.", "🗑️");
+}
+
+/* ===========================
+   Buttons enabled/disabled
+   =========================== */
+function updateActionButtons(){
+  // move buttons
+  $("#moveProgressBtn").disabled = (state.stage==="in_progress" || state.stage==="repaired" || state.stage==="scrap");
+  $("#moveRepairedBtn").disabled = (state.stage==="repaired" || state.stage==="scrap");
+  $("#moveScrapBtn").disabled = (state.stage==="scrap");
+
+  // assign self is always possible
+  // worksheet always possible
+
+  // if scrap: timer disabled
+  const timerDisabled = (state.stage==="scrap");
+  $("#startStopBtn").disabled = timerDisabled;
+  if(timerDisabled && state.timer.running){
+    stopTimer();
+  }
+
+  // if repaired: timer should stop
+  if(state.stage==="repaired" && state.timer.running){
+    stopTimer();
+  }
+
+  // start/stop button label
+  if(state.timer.running){
+    $("#startStopBtn").textContent = "⏹ Stop";
+  }else{
+    $("#startStopBtn").textContent = "⏱ Start";
+  }
+}
+
+/* ===========================
+   Tabs
+   =========================== */
+function setTab(name){
+  $$(".tabBtn").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+  $("#tab_notes").style.display = (name==="notes") ? "block" : "none";
+  $("#tab_instructions").style.display = (name==="instructions") ? "block" : "none";
+  $("#tab_activity").style.display = (name==="activity") ? "block" : "none";
+}
+
+/* ===========================
+   Worksheet modal
+   =========================== */
+function openWorksheet(){
+  $("#wsBack").classList.add("open");
+}
+function closeWorksheet(){
+  $("#wsBack").classList.remove("open");
+}
+function saveWorksheet(){
+  state.worksheet = state.worksheet || {};
+  state.worksheet.summary = $("#wsSummary").value.trim();
+  state.worksheet.parts = $("#wsParts").value.trim();
+  state.worksheet.remark = $("#wsRemark").value.trim();
+  appendActivity("Worksheet updated.");
+  toast("Worksheet", "Worksheet saved (local).", "📝");
+  markDirty();
+  closeWorksheet();
+}
+
+/* ===========================
+   Wiring events
+   =========================== */
+function wire(){
+  // top nav demo
+  // flow click
+  $$(".step").forEach(s=>{
+    s.addEventListener("click", ()=> moveStage(s.dataset.stage));
+  });
+
+  // quick move buttons
+  $("#moveProgressBtn").addEventListener("click", ()=> moveStage("in_progress"));
+  $("#moveRepairedBtn").addEventListener("click", ()=> moveStage("repaired"));
+  $("#moveScrapBtn").addEventListener("click", ()=> moveStage("scrap"));
+
+  // equipment select auto-fill
+  $("#equipmentSelect").addEventListener("change", (e)=>{
+    applyEquipment(e.target.value);
+  });
+
+  // team changes -> restrict tech list
+  $("#teamSelect").addEventListener("change", (e)=>{
+    state.teamId = e.target.value;
+    appendActivity("Team changed (tech list updated).");
+    refreshTechList();
+    state.technicianId = $("#techSelect").value;
+    toast("Team", "Technicians filtered by team.", "👥");
+    markDirty();
+  });
+
+  // technician select
+  $("#techSelect").addEventListener("change", (e)=>{
+    state.technicianId = e.target.value;
+    appendActivity("Technician assigned.");
+    toast("Assigned", "Technician updated.", "🛠️");
+    markDirty();
+  });
+
+  // assign self
+  $("#assignSelfBtn").addEventListener("click", ()=>{
+    const team = demoTeams.find(t=>t.id===state.teamId);
+    if(team && !team.members.some(m=>m.id===CURRENT_USER.id)){
+      if(!confirm("You are not in this team. Switch team to your team (IT) and assign to you?")) return;
+      state.teamId = "t_it";
+      $("#teamSelect").value = "t_it";
+      refreshTechList();
+    }
+    state.technicianId = CURRENT_USER.id;
+    $("#techSelect").value = CURRENT_USER.id;
+    appendActivity(`Assigned to ${CURRENT_USER.name}.`);
+    toast("Assigned to you", "You are now the technician.", "👤");
+    markDirty();
+  });
+
+  // subject
+  $("#subject").addEventListener("input", (e)=>{
+    state.subject = e.target.value;
+    $("#crumbTitle").textContent = state.subject || "Request";
+    markDirty(false);
+  });
+
+  // request date
+  $("#requestDate").addEventListener("change", (e)=>{
+    state.requestDate = e.target.value;
+    markDirty();
+  });
+
+  // type radios
+  $$('input[name="mtype"]').forEach(r=>{
+    r.addEventListener("change", ()=>{
+      state.type = $$('input[name="mtype"]').find(x=>x.checked).value;
+      appendActivity("Maintenance type updated.");
+      toast("Type updated", state.type==="preventive" ? "Preventive" : "Corrective", "✅");
+      markDirty();
+    });
+  });
+
+  // scheduled date
+  $("#scheduledAt").addEventListener("change", (e)=>{
+    state.scheduledAt = e.target.value;
+    updateOverdueUI();
+    appendActivity("Scheduled date updated.");
+    markDirty();
+  });
+
+  // editable right/left fields
+  $("#employee").addEventListener("input",(e)=>{ state.employee = e.target.value; markDirty(false); });
+  $("#serial").addEventListener("input",(e)=>{ state.serial = e.target.value; markDirty(false); });
+  $("#purchaseDate").addEventListener("change",(e)=>{ state.purchaseDate = e.target.value; markDirty(); });
+  $("#warrantyMonths").addEventListener("input",(e)=>{ state.warrantyMonths = Number(e.target.value||0); markDirty(false); });
+  $("#location").addEventListener("input",(e)=>{ state.location = e.target.value; markDirty(false); });
+  $("#health").addEventListener("input",(e)=>{ state.health = Number(e.target.value||0); updateOverdueUI(); markDirty(false); });
+
+  $("#company").addEventListener("input",(e)=>{ state.company = e.target.value; markDirty(false); });
+
+  // priority
+  $$("#priorityRow .diamond").forEach(d=>{
+    d.addEventListener("click", ()=> setPriority(Number(d.dataset.p)));
+  });
+
+  // notes / instructions
+  $("#notes").addEventListener("input",(e)=>{ state.notes = e.target.value; markDirty(false); });
+  $("#instructions").addEventListener("input",(e)=>{ state.instructions = e.target.value; markDirty(false); });
+
+  // tabs
+  $$(".tabBtn").forEach(b=>{
+    b.addEventListener("click", ()=> setTab(b.dataset.tab));
+  });
+
+  // worksheet
+  $("#worksheetBtn").addEventListener("click", openWorksheet);
+  $("#wsClose").addEventListener("click", closeWorksheet);
+  $("#wsCancel").addEventListener("click", closeWorksheet);
+  $("#wsSave").addEventListener("click", saveWorksheet);
+  $("#wsBack").addEventListener("click", (e)=>{ if(e.target===$("#wsBack")) closeWorksheet(); });
+
+  // timer
+  $("#startStopBtn").addEventListener("click", ()=>{
+    if(state.timer.running) stopTimer(); else startTimer();
+  });
+
+  // Save buttons
+  $("#saveBtnTop").addEventListener("click", save);
+  $("#saveBtnBottom").addEventListener("click", save);
+
+  // Discard
+  $("#discardBtn").addEventListener("click", ()=>{
+    if(!isDirty()) return toast("No changes", "Nothing to discard.", "✅");
+    if(!confirm("Discard all unsaved changes?")) return;
+    state = clone(baseline);
+    render();
+    toast("Discarded", "Reverted to last saved state.", "↩️");
+  });
+
+  // Export/Delete
+  $("#exportBtn").addEventListener("click", exportJSON);
+  $("#deleteBtn").addEventListener("click", del);
+
+  // Reset button
+  $("#resetBtn").addEventListener("click", ()=>{
+    if(!confirm("Reset request to default demo data?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = defaultRequest();
+    baseline = clone(state);
+    populateSelects();
+    render();
+    toast("Reset", "Demo request restored.", "🧪");
+  });
+
+  // Copy link
+  $("#copyLink").addEventListener("click", async ()=>{
+    const link = window.location.href;
+    try{
+      await navigator.clipboard.writeText(link);
+      toast("Copied", "Page link copied.", "🔗");
+    }catch{
+      toast("Copy failed", "Browser blocked clipboard.", "⚠️");
+    }
+  });
+
+  // bottom move via stage steps + buttons already
+  // keyboard shortcuts
+  document.addEventListener("keydown",(e)=>{
+    if(e.key==="Escape"){
+      $("#wsBack").classList.remove("open");
+      $("#toast").classList.remove("show");
+    }
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="s"){
+      e.preventDefault();
+      save();
+    }
+  });
+}
+
+/* ===========================
+   Init
+   =========================== */
+function init(){
+  populateSelects();
+
+  // hydrate initial state values
+  if(!state.requestDate) state.requestDate = new Date().toISOString().slice(0,10);
+
+  // ensure selects match state
+  $("#equipmentSelect").value = state.equipmentId;
+  $("#teamSelect").value = state.teamId;
+  refreshTechList();
+
+  // duration display
+  $("#duration").value = minutesToHHMM(state.durationMinutes||0);
+
+  // render UI
+  render();
+  wire();
+
+  // if running timer, resume ticking (rare)
+  if(state.timer.running){
+    startTimer();
+  }
+}
+init();
+</script>
+<div class="card" style="margin-top:40px">
+  <h3 style="cursor:pointer" onclick="toggleTable()">
+    Other Maintenance Requests ▼
+  </h3>
+
+  <div id="requestTable" style="display:none">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Equipment</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td>{{ r.subject }}</td>
+          <td>{{ r.equipment }}</td>
+          <td>{{ r.stage }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function toggleTable(){
+  const el = document.getElementById("requestTable");
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+</script>
+
+</body>
+</html>

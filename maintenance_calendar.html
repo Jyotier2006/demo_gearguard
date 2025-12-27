@@ -1,0 +1,779 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>GearGuard • Maintenance Calendar</title>
+
+  <!-- FullCalendar (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg0:#070a12;
+      --card: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+
+      --good:#33d17a;
+      --warn:#f5c542;
+      --bad:#ff4d4d;
+      --blue:#7aa7ff;
+
+      --radius: 18px;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--font);
+      background:#000;
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(122,167,255,.12), transparent 60%),
+        radial-gradient(1000px 600px at 20% 110%, rgba(51,209,122,.10), transparent 65%);
+      opacity:.55;
+      z-index:0;
+    }
+    .wrap{
+      position:relative; z-index:1;
+      width:min(1280px, calc(100% - 32px));
+      margin:18px auto 40px;
+      display:grid;
+      gap:14px;
+    }
+
+    /* Top bar */
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border:1px solid var(--stroke);
+      background: rgba(10,12,22,.70);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+    }
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.22), transparent 65%),
+        linear-gradient(135deg, rgba(122,167,255,.80), rgba(51,209,122,.70));
+    }
+    .brand h1{ margin:0; font-size:15px; }
+    .brand small{ display:block; color:var(--muted); margin-top:2px; font-size:12px; }
+
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .btn{
+      height:40px;
+      padding:0 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      cursor:pointer;
+      transition:.15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{ border-color:var(--stroke2); background:rgba(255,255,255,.07); transform: translateY(-1px); }
+    .btn.primary{ border-color: rgba(122,167,255,.35); background: rgba(122,167,255,.14); }
+    .btn.good{ border-color: rgba(51,209,122,.35); background: rgba(51,209,122,.14); }
+    .chip{
+      height:40px;
+      padding:0 10px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      display:flex; align-items:center; gap:8px;
+    }
+    .chip label{ color:var(--muted); font-size:12px; }
+    select, input{
+      height:30px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      color:var(--text);
+      padding:0 10px;
+      outline:none;
+    }
+
+    /* Layout below */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:14px;
+      align-items:start;
+    }
+    .card{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .head{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .head b{ font-size:13px; letter-spacing:.2px; }
+    .card .body{ padding:14px 16px; }
+
+    /* FullCalendar dark tweaks */
+    .fc{
+      --fc-page-bg-color: transparent;
+      --fc-neutral-bg-color: rgba(255,255,255,.03);
+      --fc-border-color: rgba(255,255,255,.10);
+      --fc-today-bg-color: rgba(122,167,255,.10);
+      --fc-event-border-color: transparent;
+      --fc-event-text-color: rgba(255,255,255,.92);
+      --fc-button-bg-color: rgba(255,255,255,.06);
+      --fc-button-border-color: rgba(255,255,255,.12);
+      --fc-button-text-color: rgba(255,255,255,.90);
+      --fc-button-active-bg-color: rgba(122,167,255,.18);
+      --fc-button-active-border-color: rgba(122,167,255,.30);
+    }
+    .fc .fc-toolbar-title{ font-size:16px; }
+    .fc .fc-button{ border-radius: 12px; }
+    .fc .fc-scrollgrid, .fc .fc-scrollgrid-section-header > th{
+      background: transparent;
+    }
+
+    /* Right panel */
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .kbox{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding:12px;
+    }
+    .kbox .t{ color:var(--muted); font-size:12px; }
+    .kbox .v{ font-size:18px; font-weight:900; margin-top:6px; }
+
+    .legend{
+      display:grid; gap:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .lg{
+      display:flex; align-items:center; gap:10px;
+    }
+    .sw{
+      width:12px;height:12px;border-radius:5px;
+      border:1px solid rgba(255,255,255,.18);
+    }
+
+    /* Modal */
+    .backdrop{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:50;
+    }
+    .backdrop.open{ display:flex; }
+    .modal{
+      width:min(640px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,22,.95);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .mhead{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .mbody{
+      padding:14px 16px;
+      display:grid; gap:10px;
+    }
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    .field input,.field select,.field textarea{
+      width:100%;
+      height:44px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 0 12px;
+      outline:none;
+    }
+    .field textarea{ height:auto; min-height:90px; padding:10px 12px; resize:vertical; }
+    .mfoot{
+      padding:12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+    }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px){
+      .row2{ grid-template-columns:1fr; }
+    }
+        .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+       <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+        <div>
+          <h1>GearGuard</h1>
+          <small>Maintenance Calendar</small>
+        </div>
+      </div>
+       <a href="{% url 'dashboard' %}" style="text-decoration:none">
+    <button class="tab" data-tab="dashboard">Dashboard</button>
+  </a>
+
+      <div class="actions">
+        <div class="chip">
+          <label>Stage</label>
+          <select id="stageFilter">
+            <option value="all">All</option>
+            <option value="new">New</option>
+            <option value="in_progress">In Progress</option>
+            <option value="repaired">Repaired</option>
+            <option value="scrap">Scrap</option>
+          </select>
+        </div>
+
+        <div class="chip">
+          <label>Type</label>
+          <select id="typeFilter">
+            <option value="all">All</option>
+            <option value="corrective">Corrective</option>
+            <option value="preventive">Preventive</option>
+          </select>
+        </div>
+
+        <div class="chip">
+          <label>Tech</label>
+          <select id="techFilter">
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        <button class="btn primary" id="quickAddBtn">＋ Quick Add</button>
+        <button class="btn" id="refreshBtn">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Calendar -->
+      <div class="card">
+        <div class="head">
+          <b>Schedule</b>
+          <div style="color:var(--muted);font-size:12px">
+            Drag an event to reschedule • Resize to change duration
+          </div>
+        </div>
+        <div class="body">
+          <div id="calendar"></div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="card">
+        <div class="head">
+          <b>Overview</b>
+          <button class="btn" id="todayBtn">Today</button>
+        </div>
+        <div class="body" style="display:grid; gap:12px">
+          <div class="kpi">
+            <div class="kbox">
+              <div class="t">Scheduled</div>
+              <div class="v" id="kScheduled">0</div>
+            </div>
+            <div class="kbox">
+              <div class="t">Open</div>
+              <div class="v" id="kOpen">0</div>
+            </div>
+            <div class="kbox">
+              <div class="t">Overdue (by scheduled)</div>
+              <div class="v" id="kOverdue">0</div>
+            </div>
+            <div class="kbox">
+              <div class="t">Preventive</div>
+              <div class="v" id="kPrev">0</div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <div style="font-weight:800;color:var(--text)">Stage Colors</div>
+            <div class="lg"><span class="sw" style="background: rgba(122,167,255,.55)"></span> New</div>
+            <div class="lg"><span class="sw" style="background: rgba(245,197,66,.55)"></span> In Progress</div>
+            <div class="lg"><span class="sw" style="background: rgba(51,209,122,.55)"></span> Repaired</div>
+            <div class="lg"><span class="sw" style="background: rgba(255,77,77,.55)"></span> Scrap</div>
+          </div>
+
+          <div class="legend">
+            <div style="font-weight:800;color:var(--text)">Tips</div>
+            <div>• Click an event to view/edit details</div>
+            <div>• Drag events to a new date/time to reschedule</div>
+            <div>• Resize event length to update <b>duration_hours</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal (Add/Edit) -->
+  <div class="backdrop" id="modalBack">
+    <div class="modal">
+      <div class="mhead">
+        <b id="modalTitle">Maintenance Event</b>
+        <button class="btn" id="closeModalBtn">✕</button>
+      </div>
+
+      <div class="mbody">
+        <input type="hidden" id="fId" />
+
+        <div class="row2">
+          <div class="field">
+            <label>Subject</label>
+            <input id="fSubject" placeholder="e.g., Test activity" />
+          </div>
+          <div class="field">
+            <label>Equipment</label>
+            <input id="fEquipment" placeholder="e.g., Laptop 12" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Technician</label>
+            <input id="fTechnician" placeholder="e.g., Aka Foster" />
+          </div>
+          <div class="field">
+            <label>Employee</label>
+            <input id="fEmployee" placeholder="e.g., Mitchell Admin" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Stage</label>
+            <select id="fStage">
+              <option value="new">New</option>
+              <option value="in_progress">In Progress</option>
+              <option value="repaired">Repaired</option>
+              <option value="scrap">Scrap</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Maintenance Type</label>
+            <select id="fType">
+              <option value="corrective">Corrective</option>
+              <option value="preventive">Preventive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Scheduled Date & Time</label>
+            <input id="fScheduled" type="datetime-local"/>
+          </div>
+          <div class="field">
+            <label>Duration (hours)</label>
+            <input id="fHours" type="number" min="0" step="0.5" value="1"/>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Priority</label>
+            <select id="fPriority">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Company</label>
+            <input id="fCompany" placeholder="My company"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="fNotes" placeholder="Notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="mfoot">
+        <button class="btn" id="saveBtn">Save</button>
+        <button class="btn good" id="saveCloseBtn">Save & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+  <script>
+    // ===== CSRF helper (works for Django normal CSRF cookie) =====
+    function getCSRFToken(){
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : "";
+    }
+
+    // ===== Event colors by stage =====
+    function stageColor(stage){
+      if(stage === "new") return "rgba(122,167,255,.55)";
+      if(stage === "in_progress") return "rgba(245,197,66,.55)";
+      if(stage === "repaired") return "rgba(51,209,122,.55)";
+      if(stage === "scrap") return "rgba(255,77,77,.55)";
+      return "rgba(255,255,255,.25)";
+    }
+
+    // ===== Modal =====
+    const modalBack = document.getElementById("modalBack");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    function openModal(){ modalBack.classList.add("open"); }
+    function closeModal(){ modalBack.classList.remove("open"); }
+
+    closeModalBtn.addEventListener("click", closeModal);
+    modalBack.addEventListener("click", (e)=>{ if(e.target === modalBack) closeModal(); });
+
+    // ===== Fill tech filter options dynamically =====
+    function fillTechFilter(events){
+      const techSet = new Set();
+      events.forEach(e=>{
+        const t = e.extendedProps?.technician;
+        if(t) techSet.add(t);
+      });
+
+      const sel = document.getElementById("techFilter");
+      const prev = sel.value;
+      sel.innerHTML = `<option value="all">All</option>` + [...techSet].sort().map(t => `<option value="${t}">${t}</option>`).join("");
+      if([...sel.options].some(o=>o.value===prev)) sel.value = prev;
+    }
+
+    // ===== KPIs =====
+    function updateKPIs(events){
+      const now = new Date();
+      const scheduled = events.length;
+      const open = events.filter(e => {
+        const st = e.extendedProps?.stage;
+        return st !== "repaired" && st !== "scrap";
+      }).length;
+
+      const overdue = events.filter(e => {
+        const st = e.extendedProps?.stage;
+        if(st === "repaired" || st === "scrap") return false;
+        const start = new Date(e.start);
+        return start < now;
+      }).length;
+
+      const prev = events.filter(e => e.extendedProps?.maintenance_type === "preventive").length;
+
+      document.getElementById("kScheduled").textContent = scheduled;
+      document.getElementById("kOpen").textContent = open;
+      document.getElementById("kOverdue").textContent = overdue;
+      document.getElementById("kPrev").textContent = prev;
+    }
+
+    // ===== Calendar setup =====
+    const calEl = document.getElementById("calendar");
+
+    // Filters
+    const stageFilter = document.getElementById("stageFilter");
+    const typeFilter = document.getElementById("typeFilter");
+    const techFilter = document.getElementById("techFilter");
+
+    function eventsUrl(){
+      const sp = new URLSearchParams();
+      sp.set("stage", stageFilter.value);
+      sp.set("maintenance_type", typeFilter.value);
+      sp.set("technician", techFilter.value);
+      return "/api/calendar/events/?" + sp.toString();
+    }
+
+    let calendar;
+
+    async function refetchAll(){
+      calendar.refetchEvents();
+    }
+
+    function toDatetimeLocalValue(dt){
+      // dt is Date
+      const pad = (n)=> String(n).padStart(2,"0");
+      return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    function initCalendar(){
+      calendar = new FullCalendar.Calendar(calEl, {
+        initialView: "dayGridMonth",
+        height: "auto",
+        nowIndicator: true,
+        editable: true,         // drag + resize
+        selectable: true,       // select a slot to add
+        dayMaxEvents: true,
+        headerToolbar: {
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek"
+        },
+
+        eventSources: [{
+          url: eventsUrl(),
+          method: "GET",
+          failure: function() {
+            alert("Failed to load calendar events");
+          }
+        }],
+
+        // After events load, update KPI + tech filter
+        eventsSet: function(events){
+          const plain = events.map(ev => ({
+            id: ev.id,
+            start: ev.start,
+            end: ev.end,
+            extendedProps: ev.extendedProps
+          }));
+          fillTechFilter(plain);
+          updateKPIs(plain);
+        },
+
+        // Customize rendering + color by stage
+        eventDidMount: function(info){
+          const st = info.event.extendedProps.stage;
+          info.el.style.background = stageColor(st);
+          info.el.style.borderRadius = "12px";
+          info.el.style.border = "1px solid rgba(255,255,255,.14)";
+          info.el.style.boxShadow = "0 10px 22px rgba(0,0,0,.25)";
+        },
+
+        // Click event -> open modal
+        eventClick: function(info){
+          const ev = info.event;
+          document.getElementById("modalTitle").textContent = "Edit Maintenance";
+          document.getElementById("fId").value = ev.id;
+
+          document.getElementById("fSubject").value = ev.extendedProps.subject || "";
+          document.getElementById("fEquipment").value = ev.extendedProps.equipment || "";
+          document.getElementById("fTechnician").value = ev.extendedProps.technician || "";
+          document.getElementById("fEmployee").value = ev.extendedProps.employee || "";
+          document.getElementById("fStage").value = ev.extendedProps.stage || "new";
+          document.getElementById("fType").value = ev.extendedProps.maintenance_type || "corrective";
+          document.getElementById("fPriority").value = ev.extendedProps.priority || "medium";
+          document.getElementById("fCompany").value = ev.extendedProps.company || "";
+          document.getElementById("fNotes").value = ev.extendedProps.notes || "";
+
+          const start = ev.start ? new Date(ev.start) : new Date();
+          document.getElementById("fScheduled").value = toDatetimeLocalValue(start);
+
+          const hours = ev.extendedProps.duration_hours ?? 1;
+          document.getElementById("fHours").value = hours;
+
+          openModal();
+        },
+
+        // Select empty slot -> Quick add with prefilled date
+        select: function(sel){
+          document.getElementById("modalTitle").textContent = "Quick Add Maintenance";
+          document.getElementById("fId").value = "";
+
+          document.getElementById("fSubject").value = "New Request";
+          document.getElementById("fEquipment").value = "";
+          document.getElementById("fTechnician").value = "";
+          document.getElementById("fEmployee").value = "";
+          document.getElementById("fStage").value = "new";
+          document.getElementById("fType").value = "corrective";
+          document.getElementById("fPriority").value = "medium";
+          document.getElementById("fCompany").value = "";
+          document.getElementById("fNotes").value = "";
+          document.getElementById("fHours").value = 1;
+
+          const start = sel.start ? new Date(sel.start) : new Date();
+          document.getElementById("fScheduled").value = toDatetimeLocalValue(start);
+
+          openModal();
+        },
+
+        // Drag/drop -> update scheduled_date
+        eventDrop: async function(info){
+          const ev = info.event;
+          try{
+            const payload = {
+              scheduled_date: ev.start.toISOString(),
+            };
+            await fetch(`/api/calendar/events/${ev.id}/update/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+              },
+              body: JSON.stringify(payload),
+            });
+          }catch(e){
+            info.revert();
+            alert("Update failed");
+          }
+        },
+
+        // Resize -> update duration_hours
+        eventResize: async function(info){
+          const ev = info.event;
+          try{
+            const start = ev.start;
+            const end = ev.end;
+            const hours = end && start ? (end - start) / (1000*60*60) : 1;
+
+            const payload = { duration_hours: Math.max(0, Math.round(hours*2)/2) }; // 0.5 step
+            await fetch(`/api/calendar/events/${ev.id}/update/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+              },
+              body: JSON.stringify(payload),
+            });
+          }catch(e){
+            info.revert();
+            alert("Resize update failed");
+          }
+        },
+      });
+
+      calendar.render();
+    }
+
+    // Filters refresh
+    stageFilter.addEventListener("change", ()=> {
+      calendar.getEventSources().forEach(s => s.remove());
+      calendar.addEventSource({ url: eventsUrl(), method:"GET" });
+      refetchAll();
+    });
+    typeFilter.addEventListener("change", ()=> {
+      calendar.getEventSources().forEach(s => s.remove());
+      calendar.addEventSource({ url: eventsUrl(), method:"GET" });
+      refetchAll();
+    });
+    techFilter.addEventListener("change", ()=> {
+      calendar.getEventSources().forEach(s => s.remove());
+      calendar.addEventSource({ url: eventsUrl(), method:"GET" });
+      refetchAll();
+    });
+
+    // Buttons
+    document.getElementById("todayBtn").addEventListener("click", ()=> calendar.today());
+    document.getElementById("refreshBtn").addEventListener("click", ()=> refetchAll());
+
+    document.getElementById("quickAddBtn").addEventListener("click", ()=>{
+      // open modal with now
+      document.getElementById("modalTitle").textContent = "Quick Add Maintenance";
+      document.getElementById("fId").value = "";
+      document.getElementById("fSubject").value = "New Request";
+      document.getElementById("fScheduled").value = toDatetimeLocalValue(new Date());
+      openModal();
+    });
+
+    // Save (update or create)
+    async function saveEvent(closeAfter){
+      const id = document.getElementById("fId").value.trim();
+
+      const payload = {
+        subject: document.getElementById("fSubject").value.trim() || "Untitled",
+        equipment: document.getElementById("fEquipment").value.trim(),
+        technician: document.getElementById("fTechnician").value.trim(),
+        employee: document.getElementById("fEmployee").value.trim(),
+        stage: document.getElementById("fStage").value,
+        maintenance_type: document.getElementById("fType").value,
+        priority: document.getElementById("fPriority").value,
+        company: document.getElementById("fCompany").value.trim(),
+        notes: document.getElementById("fNotes").value.trim(),
+        duration_hours: Number(document.getElementById("fHours").value || 1),
+        scheduled_date: new Date(document.getElementById("fScheduled").value).toISOString(),
+      };
+
+      if(!payload.scheduled_date || payload.scheduled_date === "Invalid Date"){
+        alert("Please select Scheduled Date & Time");
+        return;
+      }
+
+      if(id){
+        await fetch(`/api/calendar/events/${id}/update/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify(payload),
+        });
+      }else{
+        await fetch(`/api/calendar/events/create/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      await refetchAll();
+      if(closeAfter) closeModal();
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", ()=> saveEvent(false));
+    document.getElementById("saveCloseBtn").addEventListener("click", ()=> saveEvent(true));
+
+    // Init
+    initCalendar();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="en">
+    {% load static %}
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GearGuard • Reporting</title>
+
+  <style>
+    :root{
+      --bg:#000;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+
+      --good:#33d17a;
+      --warn:#f5c542;
+      --bad:#ff4d4d;
+      --blue:#7aa7ff;
+      --violet:#c39cff;
+
+      --shadow: 0 22px 55px rgba(0,0,0,.45);
+      --shadow2: 0 12px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 700px at 50% -10%, rgba(122,167,255,.12), transparent 60%),
+        radial-gradient(1000px 600px at 20% 110%, rgba(195,156,255,.10), transparent 65%),
+        radial-gradient(900px 540px at 120% 40%, rgba(51,209,122,.09), transparent 60%);
+      opacity:.75;
+      z-index:0;
+    }
+    body:after{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.10;
+      z-index:0;
+    }
+
+    .app{ position:relative; z-index:1; min-height:100%; }
+
+    /* NAVBAR */
+    .topbar{
+      position:sticky; top:0; z-index:60;
+      backdrop-filter: blur(12px);
+      background: rgba(8,10,18,.72);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner{
+      width:min(1260px, calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width: 220px; }
+    .logo{
+      width:44px;height:44px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 65%),
+        linear-gradient(135deg, rgba(122,167,255,.88), rgba(195,156,255,.78));
+      box-shadow: 0 10px 30px rgba(0,0,0,.38);
+      display:grid; place-items:center;
+      font-weight:900;
+      position:relative;
+      overflow:hidden;
+    }
+    .logo:after{
+      content:"";
+      position:absolute;
+      inset:9px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.35);
+      opacity:.65;
+    }
+    .brand h1{ margin:0; font-size:15px; letter-spacing:.2px; line-height:1.05; }
+    .brand span{ display:block; font-size:12px; color: var(--muted); margin-top:2px; }
+
+    .nav{
+      display:flex;
+      gap:8px;
+      flex:1;
+      overflow:auto hidden;
+      scrollbar-width:none;
+      padding-bottom:2px;
+    }
+    .nav::-webkit-scrollbar{ display:none; }
+
+    .tab{
+      appearance:none;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size:13px;
+      padding:9px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: .18s ease;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .tab:hover{
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-color: rgba(255,255,255,.08);
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(195,156,255,.13);
+      border-color: rgba(195,156,255,.30);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25) inset;
+    }
+
+    .actions{ display:flex; align-items:center; gap:10px; justify-content:flex-end; min-width: 340px; }
+    .iconbtn{
+      width:40px;height:40px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .iconbtn:hover{ transform: translateY(-1px); border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      cursor:pointer;
+      user-select:none;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.14);
+    }
+    .pill:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+    .avatar{
+      width:28px;height:28px;
+      border-radius: 12px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.22), transparent 65%),
+        linear-gradient(135deg, rgba(255,77,77,.74), rgba(245,197,66,.62));
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    /* MAIN */
+    .main{
+      width:min(1260px, calc(100% - 32px));
+      margin: 18px auto 40px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .header-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .page-title{ display:flex; gap:12px; }
+    .badge{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .page-title h2{ margin:0; font-size:18px; font-weight:900; }
+    .subtitle{ margin:6px 0 0; color: var(--muted); font-size:12px; }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .select{
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.15);
+      background:#0a0a0a;
+      color:#ffffff;
+      padding: 0 12px;
+      outline:none;
+      cursor:pointer;
+      min-width: 200px;
+    }
+    .btn{
+      height:40px;
+      padding:0 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      transition:.18s ease;
+      font-size:12.8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+    }
+    .btn:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); transform: translateY(-1px); }
+    .btn.primary{ border-color: rgba(195,156,255,.34); background: rgba(195,156,255,.14); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      align-items:start;
+    }
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .card .c-head{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      flex-wrap:wrap;
+    }
+    .card .c-head b{ font-size:13px; }
+    .card .c-body{ padding: 14px 16px; }
+
+    .stat{
+      min-height: 118px;
+      padding: 18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .stat .left{ display:flex; flex-direction:column; gap:6px; }
+    .stat .title{ font-size:13px; font-weight:900; }
+    .stat .value{ font-size:22px; font-weight:900; line-height:1; }
+    .stat .desc{ font-size:12.3px; color: var(--muted); }
+    .spark{
+      width:90px;height:56px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .spark canvas{ width:100%; height:100%; }
+
+    .stat.blue{ border-color: rgba(122,167,255,.50); }
+    .stat.blue:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(122,167,255,.88); }
+    .stat.violet{ border-color: rgba(195,156,255,.52); }
+    .stat.violet:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(195,156,255,.88); }
+    .stat.warn{ border-color: rgba(245,197,66,.50); }
+    .stat.warn:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(245,197,66,.88); }
+    .stat.red{ border-color: rgba(255,77,77,.50); }
+    .stat.red:before{ content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background: rgba(255,77,77,.88); }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .tag.good{ border-color: rgba(51,209,122,.26); background: rgba(51,209,122,.10); }
+    .tag.warn{ border-color: rgba(245,197,66,.26); background: rgba(245,197,66,.10); }
+    .tag.bad{ border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10); }
+    .tag.info{ border-color: rgba(195,156,255,.26); background: rgba(195,156,255,.10); }
+
+    .chartBox{
+      width:100%;
+      height: 240px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding: 12px;
+    }
+    .chartTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chartTop b{ font-size:13px; }
+    .chartTop small{ color: var(--muted); font-size:12px; }
+    .legend{ display:flex; gap:8px; flex-wrap:wrap; }
+    .dot{ width:10px;height:10px;border-radius:999px; display:inline-block; margin-right:6px; }
+    .legend span{ font-size:12px; color: var(--muted); display:inline-flex; align-items:center; }
+
+    .chartCanvas{
+      flex:1;
+      border-radius: 14px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.08);
+      overflow:hidden;
+    }
+    .chartCanvas canvas{ width:100%; height:100%; }
+
+    .tableWrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width: 980px;
+    }
+    thead th{
+      text-align:left;
+      font-weight:850;
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.22);
+      background: rgba(255,255,255,.02);
+      white-space:nowrap;
+      user-select:none;
+      cursor:pointer;
+      position:relative;
+    }
+    thead th .sort{
+      position:absolute; right:10px; top:50%;
+      transform:translateY(-50%);
+      opacity:.65; font-size:11px;
+    }
+    tbody td{
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.18);
+      vertical-align:top;
+    }
+    tbody tr{ cursor:pointer; transition:.12s ease; }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
+
+    .muted{ color: var(--muted); }
+
+    /* Drawer + Toast */
+    .drawerBack{ position:fixed; inset:0; background: rgba(0,0,0,.45); display:none; z-index: 140; }
+    .drawerBack.open{ display:block; }
+    .drawer{
+      position:fixed; top:0; right:-560px; height:100%;
+      width:min(560px, 100%);
+      background: rgba(10,12,22,.96);
+      border-left:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      z-index:150;
+      transition:right .22s ease;
+      display:flex; flex-direction:column;
+    }
+    .drawer.open{ right:0; }
+    .drawer .dhead{
+      padding: 14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .drawer .dbody{ padding: 14px 16px; overflow:auto; display:grid; gap:12px; }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tab2{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size:12.5px;
+      padding:8px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+    }
+    .tab2.active{ border-color: rgba(195,156,255,.35); background: rgba(195,156,255,.14); }
+    .kv{
+      display:grid;
+      grid-template-columns: 170px 1fr;
+      gap:8px 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .kv .k{ color: var(--muted); font-size:12px; }
+    .kv .v{ font-size:13px; font-weight:750; }
+    .drawer .dfoot{
+      padding: 12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
+    }
+
+    .toast{
+      position:fixed; right:18px; bottom:18px;
+      width:min(380px, calc(100% - 36px));
+      background: rgba(10,12,22,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      display:none;
+      gap:10px;
+      align-items:flex-start;
+      z-index:300;
+    }
+    .toast.show{ display:flex; }
+    .toast .ticon{
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .toast b{ display:block; font-size:13px; }
+    .toast small{ color: var(--muted); display:block; margin-top:2px; line-height:1.25; }
+    .toast .close{
+      margin-left:auto;
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+      
+    }
+    .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="topbar-inner">
+       <div class="brand">
+          <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+
+          <div>
+          <h1>GearGuard</h1>
+          <span>Maintenance Tracker</span>
+        </div>
+      </div>
+
+           <nav class="nav" aria-label="Primary">
+          <a href="{% url 'maintainance' %}" style="text-decoration:none">
+    <button class="tab" data-tab="maintenance">Maintenance</button>
+  </a>
+          <a href="{% url 'dashboard' %}" style="text-decoration:none">
+    <button class="tab" data-tab="dashboard">Dashboard</button>
+  </a>
+           <a href="{% url 'maintenance_calendar' %}" style="text-decoration:none">
+    <button class="tab" data-tab="mainenance_calendar">Maintenance Calendar</button>
+  </a>
+  <a href="{% url 'equipment' %}" style="text-decoration:none">
+    <button class="tab" data-tab="equipment">Equipment</button>
+  </a>
+  <a href="{% url 'reporting' %}" style="text-decoration:none">
+    <button class="tab" data-tab="reporting">Reporting</button>
+  </a>
+  <a href="{% url 'teams' %}" style="text-decoration:none">
+    <button class="tab" data-tab="teams">Teams</button>
+  </a>
+     
+        </nav>
+
+      <div class="actions">
+        <button class="iconbtn" id="downloadBtn" title="Download CSV">⬇️</button>
+        <button class="iconbtn" id="refreshBtn" title="Refresh">🔄</button>
+        <div class="pill" title="Current Account">
+          <div class="avatar"></div>
+          <div style="display:flex;flex-direction:column;line-height:1.05">
+            <b style="font-size:12.8px;">jyotier</b>
+            <small style="font-size:11px;color:var(--muted)">Current account</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="header-row">
+      <div class="page-title">
+        <span class="badge">Insights</span>
+        <div>
+          <h2>Reporting</h2>
+          <p class="subtitle">KPIs + charts + detailed table. Filters update the report live.</p>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <select class="select" id="rangeSelect">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last 12 months</option>
+        </select>
+
+        <select class="select" id="groupSelect">
+          <option value="day" selected>Group by Day</option>
+          <option value="week">Group by Week</option>
+          <option value="month">Group by Month</option>
+        </select>
+
+        <select class="select" id="focusSelect">
+          <option value="overview" selected>Overview</option>
+          <option value="sla">SLA / Response</option>
+          <option value="cost">Cost / Hours</option>
+          <option value="technicians">Technicians</option>
+          <option value="equipment">Equipment</option>
+        </select>
+
+        <button class="btn primary" id="generateBtn">📊 Generate</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <section class="grid">
+      <!-- KPIs -->
+      <div class="card stat violet" style="grid-column: 1 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(195,156,255,.98);">Total Requests</div>
+          <div class="value" id="kTotal">0</div>
+          <div class="desc">in selected range</div>
+        </div>
+        <div class="spark"><canvas id="spTotal" width="180" height="110"></canvas></div>
+      </div>
+
+      <div class="card stat blue" style="grid-column: 4 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(122,167,255,.98);">Resolved</div>
+          <div class="value" id="kResolved">0</div>
+          <div class="desc">repaired / closed</div>
+        </div>
+        <div class="spark"><canvas id="spResolved" width="180" height="110"></canvas></div>
+      </div>
+
+      <div class="card stat warn" style="grid-column: 7 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(245,197,66,.98);">Avg Response</div>
+          <div class="value" id="kResp">0h</div>
+          <div class="desc">request → scheduled</div>
+        </div>
+        <div class="spark"><canvas id="spResp" width="180" height="110"></canvas></div>
+      </div>
+
+      <div class="card stat red" style="grid-column: 10 / span 3;">
+        <div class="left">
+          <div class="title" style="color: rgba(255,77,77,.98);">Overdue SLA</div>
+          <div class="value" id="kOverdue">0</div>
+          <div class="desc">breached target</div>
+        </div>
+        <div class="spark"><canvas id="spOver" width="180" height="110"></canvas></div>
+      </div>
+
+      <!-- Trend -->
+      <div class="card" style="grid-column: 1 / span 7;">
+        <div class="c-head">
+          <b>Requests Trend</b>
+          <div class="legend">
+            <span><i class="dot" style="background:rgba(195,156,255,.9)"></i>Created</span>
+            <span><i class="dot" style="background:rgba(51,209,122,.9)"></i>Resolved</span>
+            <span><i class="dot" style="background:rgba(255,77,77,.9)"></i>Overdue</span>
+          </div>
+        </div>
+        <div class="c-body">
+          <div class="chartBox">
+            <div class="chartTop">
+              <div>
+                <b id="trendTitle">—</b>
+                <small id="trendSubtitle">—</small>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="tag info" id="tagFocus">Focus: —</span>
+                <span class="tag warn" id="tagSLA">SLA target: —</span>
+              </div>
+            </div>
+            <div class="chartCanvas"><canvas id="trendChart" width="1200" height="380"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Distribution -->
+      <div class="card" style="grid-column: 8 / -1;">
+        <div class="c-head">
+          <b>Distribution</b>
+          <span class="muted">Stage / Priority</span>
+        </div>
+        <div class="c-body">
+          <div class="chartBox" style="height: 240px;">
+            <div class="chartTop">
+              <div>
+                <b>Stage Breakdown</b>
+                <small id="stageNote">—</small>
+              </div>
+            </div>
+            <div class="chartCanvas"><canvas id="stageChart" width="1200" height="380"></canvas></div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="chartBox" style="height: 240px;">
+            <div class="chartTop">
+              <div>
+                <b>Priority Breakdown</b>
+                <small id="prioNote">—</small>
+              </div>
+            </div>
+            <div class="chartCanvas"><canvas id="prioChart" width="1200" height="380"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="c-head">
+          <b>Detailed Report</b>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="btn" style="cursor:default">Rows <b id="rowCount" style="margin-left:6px">0</b></span>
+            <span class="btn" style="cursor:default;border-color:rgba(51,209,122,.26);background:rgba(51,209,122,.10)">
+              Completed <b id="doneCount" style="margin-left:6px">0</b>
+            </span>
+            <span class="btn" style="cursor:default;border-color:rgba(255,77,77,.30);background:rgba(255,77,77,.12)">
+              Overdue <b id="overCount" style="margin-left:6px">0</b>
+            </span>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-key="subject">Subject <span class="sort" id="s-subject">↕</span></th>
+                <th data-key="equipment">Equipment <span class="sort" id="s-equipment">↕</span></th>
+                <th data-key="stage">Stage <span class="sort" id="s-stage">↕</span></th>
+                <th data-key="priority">Priority <span class="sort" id="s-priority">↕</span></th>
+                <th data-key="requestAt">Requested <span class="sort" id="s-requestAt">↕</span></th>
+                <th data-key="scheduledAt">Scheduled <span class="sort" id="s-scheduledAt">↕</span></th>
+                <th data-key="tech">Technician <span class="sort" id="s-tech">↕</span></th>
+                <th data-key="duration">Hours <span class="sort" id="s-duration">↕</span></th>
+                <th data-key="respHrs">Response <span class="sort" id="s-respHrs">↕</span></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Drawer -->
+  <div class="drawerBack" id="drawerBack"></div>
+  <aside class="drawer" id="drawer">
+    <div class="dhead">
+      <b id="dTitle">Row</b>
+      <button class="iconbtn" id="closeDrawer">✕</button>
+    </div>
+    <div class="dbody">
+      <div class="tabs">
+        <button class="tab2 active" data-pane="summary">Summary</button>
+        <button class="tab2" data-pane="sla">SLA</button>
+        <button class="tab2" data-pane="cost">Cost</button>
+      </div>
+      <div id="pane-summary"></div>
+      <div id="pane-sla" style="display:none"></div>
+      <div id="pane-cost" style="display:none"></div>
+    </div>
+    <div class="dfoot">
+      <button class="btn" id="downloadRowBtn">⬇️ Export Row</button>
+      <button class="btn primary" id="copyBtn">📋 Copy</button>
+    </div>
+  </aside>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="ticon" id="toastIcon">✅</div>
+    <div>
+      <b id="toastTitle">Done</b>
+      <small id="toastMsg">.</small>
+    </div>
+    <button class="close" id="toastClose">✕</button>
+  </div>
+
+</div>
+
+<script>
+  /* =======================
+     HELPERS
+  ======================= */
+  const $ = (q)=>document.querySelector(q);
+  const $$ = (q)=>[...document.querySelectorAll(q)];
+  const escapeHTML = (s)=> String(s??"")
+    .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+
+  function toast(title,msg,icon="✅"){
+    $("#toastIcon").textContent=icon;
+    $("#toastTitle").textContent=title;
+    $("#toastMsg").textContent=msg;
+    $("#toast").classList.add("show");
+    clearTimeout(window.__t);
+    window.__t=setTimeout(()=>$("#toast").classList.remove("show"), 2200);
+  }
+
+  $("#toastClose").addEventListener("click", ()=>$("#toast").classList.remove("show"));
+
+  function isoDate(dt){
+    const y=dt.getFullYear();
+    const m=String(dt.getMonth()+1).padStart(2,"0");
+    const d=String(dt.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function hoursBetween(a,b){
+    return Math.max(0,(new Date(b).getTime()-new Date(a).getTime())/(1000*60*60));
+  }
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+  /* =======================
+     DEMO DATA
+  ======================= */
+  function seedDemo(){
+    const now = new Date();
+    const equipments = ["Assembly 1","Drill 1","UPS Room 1","CNC 4","Compressor","Forklift 2","Packing Line"];
+    const techs = ["Vasu","Riya","Nikhil","Aman","Meera","Jay"];
+    const subjects = [
+      "Noise/Vibration check","Oil leakage inspection","Emergency stop not working",
+      "Calibration required","Motor overheating","Preventive service",
+      "Belt replacement","Sensor alignment","Power fluctuation issue","Routine cleaning"
+    ];
+    const stages = ["new","in_progress","repaired","scrap"];
+    const priorities = ["high","medium","low"];
+
+    const rows=[];
+    for(let i=0;i<160;i++){
+      const daysAgo = randInt(0, 130);
+      const req = new Date(now.getTime() - daysAgo*86400000);
+      req.setHours(randInt(7,18), randInt(0,59), 0, 0);
+
+      const sch = new Date(req.getTime() + randInt(0,36)*3600000);
+
+      const stagePick =
+        (Math.random()<0.55) ? "repaired" :
+        (Math.random()<0.18) ? "in_progress" :
+        (Math.random()<0.03) ? "scrap" : "new";
+
+      const pr = (Math.random()<0.28) ? "high" : (Math.random()<0.55 ? "medium" : "low");
+      const dur = stagePick==="repaired" ? randInt(1,10) : (stagePick==="in_progress" ? randInt(1,6) : randInt(0,3));
+
+      const resp = Math.round(hoursBetween(req, sch)*10)/10;
+      const sla = pr==="high" ? 6 : (pr==="medium" ? 12 : 24);
+
+      rows.push({
+        id: "r_"+i+"_"+Date.now(),
+        subject: subjects[randInt(0, subjects.length-1)],
+        equipment: equipments[randInt(0, equipments.length-1)],
+        stage: stagePick,
+        priority: pr,
+        requestAt: req.toISOString(),
+        scheduledAt: sch.toISOString(),
+        requestDate: isoDate(req),
+        scheduledDate: isoDate(sch),
+        tech: techs[randInt(0, techs.length-1)],
+        duration: dur,
+        respHrs: resp,
+        slaTarget: sla
+      });
+    }
+    return rows;
+  }
+
+  const state = {
+    rows: JSON.parse(localStorage.getItem("gg_report_rows")||"null") ?? seedDemo(),
+    sort: { key:"requestAt", dir:"desc" },
+    selectedId: null
+  };
+  localStorage.setItem("gg_report_rows", JSON.stringify(state.rows));
+
+  /* =======================
+     FILTERS + GROUPING
+  ======================= */
+  function getRangeDays(){ return Number($("#rangeSelect").value||30); }
+  function getGroup(){ return $("#groupSelect").value; }
+  function getFocus(){ return $("#focusSelect").value; }
+
+  function withinRange(row){
+    const days = getRangeDays();
+    const min = new Date(Date.now() - days*86400000);
+    return new Date(row.requestAt) >= min;
+  }
+
+  function getFilteredSortedRows(){
+    let list = state.rows.filter(withinRange);
+
+    const {key, dir} = state.sort;
+    list.sort((a,b)=>{
+      const av=a[key], bv=b[key];
+      if(key.endsWith("At")){
+        const ad=new Date(av).getTime(), bd=new Date(bv).getTime();
+        return dir==="asc"? ad-bd : bd-ad;
+      }
+      if(typeof av==="number" || typeof bv==="number"){
+        const an=Number(av??0), bn=Number(bv??0);
+        return dir==="asc"? an-bn : bn-an;
+      }
+      const as=String(av??"").toLowerCase(), bs=String(bv??"").toLowerCase();
+      if(as<bs) return dir==="asc"? -1 : 1;
+      if(as>bs) return dir==="asc"? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }
+
+  function groupKey(dateObj, mode){
+    const d = new Date(dateObj);
+    d.setHours(0,0,0,0);
+    if(mode==="day") return isoDate(d);
+
+    if(mode==="week"){
+      const day = d.getDay(); // Sun=0
+      const diff = (day===0 ? -6 : 1) - day; // to Monday
+      d.setDate(d.getDate() + diff);
+      return isoDate(d);
+    }
+
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-01`;
+  }
+
+  /* =======================
+     KPI + TAGS
+  ======================= */
+  function computeKPIs(rows){
+    const total = rows.length;
+    const resolved = rows.filter(r=>r.stage==="repaired").length;
+    const avgResp = total ? rows.reduce((s,r)=>s+(r.respHrs||0),0)/total : 0;
+    const overdue = rows.filter(r=> (r.respHrs||0) > (r.slaTarget||12)).length;
+    return { total, resolved, avgResp: Math.round(avgResp*10)/10, overdue };
+  }
+
+  function stageTag(s){
+    if(s==="new") return `<span class="tag info">New</span>`;
+    if(s==="in_progress") return `<span class="tag warn">In Progress</span>`;
+    if(s==="repaired") return `<span class="tag good">Repaired</span>`;
+    if(s==="scrap") return `<span class="tag bad">Scrap</span>`;
+    return `<span class="tag">${escapeHTML(s)}</span>`;
+  }
+  function prioTag(p){
+    if(p==="high") return `<span class="tag bad">High</span>`;
+    if(p==="medium") return `<span class="tag warn">Medium</span>`;
+    if(p==="low") return `<span class="tag good">Low</span>`;
+    return `<span class="tag">${escapeHTML(p)}</span>`;
+  }
+
+  /* =======================
+     CANVAS DRAWING
+  ======================= */
+  function clearCanvas(ctx,w,h){
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle="rgba(0,0,0,0.15)";
+    ctx.fillRect(0,0,w,h);
+
+    ctx.strokeStyle="rgba(255,255,255,0.06)";
+    ctx.lineWidth=1;
+    const rows=4, cols=8;
+    for(let i=1;i<rows;i++){
+      const y=(h/rows)*i;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+    for(let j=1;j<cols;j++){
+      const x=(w/cols)*j;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+  }
+
+  function lineSeries(ctx, points, w, h, yMax, stroke, fill){
+    const pad=28;
+    const innerW=w-pad*2, innerH=h-pad*2;
+    const n=points.length;
+    if(n<2) return;
+
+    ctx.strokeStyle=stroke;
+    ctx.lineWidth=2.2;
+    ctx.beginPath();
+    points.forEach((v,i)=>{
+      const x=pad + innerW*(i/(n-1));
+      const y=pad + innerH - innerH*(v/yMax);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle=fill;
+    ctx.beginPath();
+    points.forEach((v,i)=>{
+      const x=pad + innerW*(i/(n-1));
+      const y=pad + innerH - innerH*(v/yMax);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.lineTo(pad+innerW, pad+innerH);
+    ctx.lineTo(pad, pad+innerH);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function barChart(ctx, labels, values, w, h, colors){
+    const pad=28;
+    const innerW=w-pad*2, innerH=h-pad*2;
+    const max=Math.max(...values, 1);
+    const n=values.length;
+    const gap=14;
+    const barW=(innerW - gap*(n-1))/n;
+
+    ctx.font="12px ui-sans-serif, system-ui";
+    values.forEach((v,i)=>{
+      const x=pad + i*(barW+gap);
+      const bh= innerH*(v/max);
+      const y=pad + (innerH - bh);
+      ctx.fillStyle=colors[i] || "rgba(255,255,255,0.6)";
+      ctx.fillRect(x,y,barW,bh);
+
+      ctx.fillStyle="rgba(255,255,255,0.75)";
+      ctx.fillText(String(v), x + barW/2 - 6, y - 6);
+
+      ctx.fillStyle="rgba(255,255,255,0.55)";
+      ctx.fillText(labels[i], x + 4, pad + innerH + 18);
+    });
+  }
+
+  function drawSpark(id, values){
+    const c=document.getElementById(id);
+    if(!c) return;
+    const ctx=c.getContext("2d");
+    const w=c.width, h=c.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle="rgba(255,255,255,0.02)";
+    ctx.fillRect(0,0,w,h);
+
+    if(!values || values.length<2) return;
+    const max=Math.max(...values), min=Math.min(...values);
+    const pad=10;
+    const step=(w-pad*2)/(values.length-1);
+
+    ctx.strokeStyle="rgba(255,255,255,0.65)";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    values.forEach((v,i)=>{
+      const t = (max===min)?0.5:(v-min)/(max-min);
+      const x=pad+step*i;
+      const y=(h-pad)-t*(h-pad*2);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  }
+
+  /* =======================
+     BUILD TRENDS (UPDATED!)
+  ======================= */
+  function buildTrend(rows){
+    const mode = getGroup();
+    const map = new Map();
+
+    rows.forEach(r=>{
+      const k = groupKey(new Date(r.requestAt), mode);
+      if(!map.has(k)) map.set(k, {created:0,resolved:0,overdue:0, sumResp:0, cnt:0});
+      const obj = map.get(k);
+      obj.created++;
+      if(r.stage==="repaired") obj.resolved++;
+      if((r.respHrs||0) > (r.slaTarget||12)) obj.overdue++;
+      obj.sumResp += (r.respHrs||0);
+      obj.cnt++;
+    });
+
+    const keys=[...map.keys()].sort((a,b)=> new Date(a)-new Date(b));
+    const created=keys.map(k=>map.get(k).created);
+    const resolved=keys.map(k=>map.get(k).resolved);
+    const overdue=keys.map(k=>map.get(k).overdue);
+    const avgResp=keys.map(k=>{
+      const o=map.get(k);
+      return o.cnt? Math.round((o.sumResp/o.cnt)*10)/10 : 0;
+    });
+
+    return { keys, created, resolved, overdue, avgResp };
+  }
+
+  /* =======================
+     RENDER
+  ======================= */
+  function updateHeaderLabels(){
+    $("#trendTitle").textContent = `Last ${getRangeDays()} days`;
+    $("#trendSubtitle").textContent = `Grouped by ${getGroup()}`;
+    $("#tagFocus").textContent = `Focus: ${$("#focusSelect").options[$("#focusSelect").selectedIndex].text}`;
+
+    const sla = (getFocus()==="sla") ? "6/12/24h (by priority)" : "Default 12h";
+    $("#tagSLA").textContent = `SLA target: ${sla}`;
+
+    $("#stageNote").textContent = `Updated for ${getRangeDays()} days`;
+    $("#prioNote").textContent = `Updated for ${getRangeDays()} days`;
+  }
+
+  function renderCharts(rows){
+    updateHeaderLabels();
+    const trend = buildTrend(rows);
+
+    // Trend chart changes based on Focus
+    const tc=$("#trendChart"), tctx=tc.getContext("2d");
+    clearCanvas(tctx, tc.width, tc.height);
+
+    let s1 = trend.created;
+    let s2 = trend.resolved;
+    let s3 = trend.overdue;
+
+    // Focus behavior:
+    // - overview: created/resolved/overdue (default)
+    // - sla: show avgResp as series2, overdue as series3
+    // - cost: show created, resolved, (and overdue)
+    if(getFocus()==="sla"){
+      s1 = trend.created;
+      s2 = trend.avgResp;  // important change
+      s3 = trend.overdue;
+    }
+
+    const yMax = Math.max(...s1, ...s2, ...s3, 1);
+
+    lineSeries(tctx, s1, tc.width, tc.height, yMax, "rgba(195,156,255,0.95)", "rgba(195,156,255,0.10)");
+    lineSeries(tctx, s2, tc.width, tc.height, yMax, "rgba(51,209,122,0.95)", "rgba(51,209,122,0.08)");
+    lineSeries(tctx, s3, tc.width, tc.height, yMax, "rgba(255,77,77,0.95)", "rgba(255,77,77,0.08)");
+
+    // Stage bars
+    const stageCounts = {
+      new: rows.filter(r=>r.stage==="new").length,
+      in_progress: rows.filter(r=>r.stage==="in_progress").length,
+      repaired: rows.filter(r=>r.stage==="repaired").length,
+      scrap: rows.filter(r=>r.stage==="scrap").length
+    };
+    const sc=$("#stageChart"), sctx=sc.getContext("2d");
+    clearCanvas(sctx, sc.width, sc.height);
+    barChart(
+      sctx,
+      ["New","InProg","Repaired","Scrap"],
+      [stageCounts.new, stageCounts.in_progress, stageCounts.repaired, stageCounts.scrap],
+      sc.width, sc.height,
+      ["rgba(122,167,255,0.85)","rgba(245,197,66,0.85)","rgba(51,209,122,0.85)","rgba(255,77,77,0.85)"]
+    );
+
+    // Priority bars
+    const prCounts = {
+      high: rows.filter(r=>r.priority==="high").length,
+      medium: rows.filter(r=>r.priority==="medium").length,
+      low: rows.filter(r=>r.priority==="low").length
+    };
+    const pc=$("#prioChart"), pctx=pc.getContext("2d");
+    clearCanvas(pctx, pc.width, pc.height);
+    barChart(
+      pctx,
+      ["High","Medium","Low"],
+      [prCounts.high, prCounts.medium, prCounts.low],
+      pc.width, pc.height,
+      ["rgba(255,77,77,0.85)","rgba(245,197,66,0.85)","rgba(51,209,122,0.85)"]
+    );
+
+    // Sparklines
+    const slice = (arr)=> arr.slice(Math.max(0, arr.length-12));
+    drawSpark("spTotal", slice(trend.created));
+    drawSpark("spResolved", slice(trend.resolved));
+    drawSpark("spOver", slice(trend.overdue));
+    drawSpark("spResp", slice(trend.avgResp));
+  }
+
+  function renderKPIs(rows){
+    const k = computeKPIs(rows);
+    $("#kTotal").textContent = String(k.total);
+    $("#kResolved").textContent = String(k.resolved);
+    $("#kResp").textContent = `${k.avgResp}h`;
+    $("#kOverdue").textContent = String(k.overdue);
+  }
+
+  function updateSortIcons(){
+    $$("thead th .sort").forEach(sp=> sp.textContent="↕");
+    const sp = $("#s-"+state.sort.key);
+    if(sp) sp.textContent = state.sort.dir==="asc" ? "↑" : "↓";
+  }
+
+  function renderTable(rows){
+    updateSortIcons();
+
+    $("#rowCount").textContent = rows.length;
+    $("#doneCount").textContent = rows.filter(r=>r.stage==="repaired").length;
+    $("#overCount").textContent = rows.filter(r=> (r.respHrs||0) > (r.slaTarget||12)).length;
+
+    const tbody=$("#tbody");
+    tbody.innerHTML="";
+
+    if(!rows.length){
+      const tr=document.createElement("tr");
+      tr.innerHTML = `<td colspan="9" style="padding:18px 16px;color:rgba(255,255,255,.62)">No rows in this range.</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    rows.forEach(r=>{
+      const overdue = (r.respHrs||0) > (r.slaTarget||12);
+
+      const tr=document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-weight:900">${escapeHTML(r.subject)}</div>
+            <div class="muted" style="font-size:12px">
+              SLA: ${r.slaTarget}h ${overdue ? "• <span style='color:rgba(255,77,77,.9)'>Overdue</span>" : ""}
+            </div>
+          </div>
+        </td>
+        <td>${escapeHTML(r.equipment)}</td>
+        <td>${stageTag(r.stage)}</td>
+        <td>${prioTag(r.priority)}</td>
+        <td>${escapeHTML(r.requestDate)}</td>
+        <td>${escapeHTML(r.scheduledDate)}</td>
+        <td>${escapeHTML(r.tech)}</td>
+        <td>${escapeHTML(String(r.duration||0))}</td>
+        <td>${escapeHTML(String(r.respHrs||0))}h</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderAll(showMsg=false){
+    const rows = getFilteredSortedRows();
+    renderKPIs(rows);
+    renderCharts(rows);
+    renderTable(rows);
+    if(showMsg) toast("Updated","Reporting refreshed with new filters.","📊");
+  }
+
+  /* =======================
+     SORT EVENTS (FIXED)
+  ======================= */
+  $$("thead th").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const key = th.dataset.key;
+      if(state.sort.key===key) state.sort.dir = state.sort.dir==="asc" ? "desc" : "asc";
+      else { state.sort.key = key; state.sort.dir="asc"; }
+      renderAll(false);
+    });
+  });
+
+  /* =======================
+     LIVE UPDATES (IMPORTANT)
+     - When user changes dropdowns, report updates immediately.
+  ======================= */
+  $("#rangeSelect").addEventListener("change", ()=>renderAll(true));
+  $("#groupSelect").addEventListener("change", ()=>renderAll(true));
+  $("#focusSelect").addEventListener("change", ()=>renderAll(true));
+
+  $("#generateBtn").addEventListener("click", ()=>renderAll(true));
+
+  $("#resetBtn").addEventListener("click", ()=>{
+    $("#rangeSelect").value="30";
+    $("#groupSelect").value="day";
+    $("#focusSelect").value="overview";
+    renderAll(true);
+    toast("Reset","Filters set back to default.","🧹");
+  });
+
+  $("#refreshBtn").addEventListener("click", ()=>renderAll(true));
+
+  /* =======================
+     CSV EXPORT
+  ======================= */
+  function exportCSV(rows){
+    const header = ["Subject","Equipment","Stage","Priority","RequestDate","ScheduledDate","Technician","Hours","ResponseHours","SLA_Target"];
+    const out=[header];
+    rows.forEach(r=>{
+      out.push([
+        r.subject, r.equipment, r.stage, r.priority,
+        r.requestDate, r.scheduledDate, r.tech,
+        String(r.duration||0), String(r.respHrs||0), String(r.slaTarget||12)
+      ]);
+    });
+    const csv = out.map(r => r.map(cell => `"${String(cell ?? "").replaceAll('"','""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gear-guard-report-${getRangeDays()}d.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("Exported","CSV downloaded.","⬇️");
+  }
+  $("#downloadBtn").addEventListener("click", ()=>{
+    exportCSV(getFilteredSortedRows());
+  });
+
+  /* =======================
+     INIT
+  ======================= */
+  renderAll(false);
+</script>
+</body>
+</html>

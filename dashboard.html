@@ -1,0 +1,2578 @@
+<!-- index.html — GearGuard Dashboard (Detailed + Interactive + Background Image)
+     ✅ Single-file (HTML+CSS+JS)
+     ✅ Ready to connect with Django later (replace demoData with context / API)
+     ✅ Includes: stats, searchable/sortable table, kanban drag-drop, charts, drawer, quick add/edit, background image picker, localStorage
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GearGuard • Dashboard</title>
+
+  <style>
+    :root{
+      --bg0:#070a12;
+      --bg1:#0b1020;
+
+      --glass: rgba(255,255,255,.06);
+      --glass2: rgba(255,255,255,.09);
+      --stroke: rgba(255,255,255,.10);
+      --stroke2: rgba(255,255,255,.16);
+
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.66);
+      --muted2: rgba(255,255,255,.52);
+
+      --good:#33d17a;
+      --warn:#f5c542;
+      --bad:#ff4d4d;
+      --blue:#7aa7ff;
+      --violet:#c39cff;
+
+      --shadow: 0 22px 55px rgba(0,0,0,.45);
+      --shadow2: 0 12px 30px rgba(0,0,0,.35);
+
+      --radius: 18px;
+      --radius2: 14px;
+
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+
+      --bg-img: none; /* user can set */
+      --bg-img-opacity: .22;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: var(--font);
+  color: var(--text);
+
+  background: #000000;
+  overflow-x:hidden;
+}
+
+
+    /* soft noise overlay */
+    body:before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(255,255,255,.06), transparent 60%),
+        radial-gradient(1000px 600px at 20% 110%, rgba(255,255,255,.05), transparent 65%);
+      mix-blend-mode: overlay;
+      opacity:.35;
+      z-index:0;
+    }
+    body:after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.10;
+      z-index:0;
+    }
+
+    .app{ position:relative; z-index:1; min-height:100%; display:flex; flex-direction:column; }
+
+    /* ===== TOP BAR ===== */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter: blur(12px);
+      background: rgba(8,10,18,.72);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topbar-inner{
+      width:min(1260px, calc(100% - 32px));
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 220px;
+    }
+    .logo{
+      width:38px;height:38px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(18px 18px at 30% 30%, rgba(255,255,255,.25), transparent 65%),
+        linear-gradient(135deg, rgba(122,167,255,.88), rgba(51,209,122,.78));
+      box-shadow: 0 10px 30px rgba(0,0,0,.38);
+      position:relative;
+    }
+    .logo:after{
+      content:"";
+      position:absolute;
+      inset:9px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.35);
+      opacity:.65;
+    }
+    .brand h1{ margin:0; font-size:15px; letter-spacing:.2px; line-height:1.05; }
+    .brand span{ display:block; font-size:12px; color: var(--muted); margin-top:2px; }
+
+    .nav{
+      display:flex;
+      gap:8px;
+      flex:1;
+      overflow:auto hidden;
+      scrollbar-width:none;
+      padding-bottom:2px;
+    }
+    .nav::-webkit-scrollbar{ display:none; }
+
+    .tab{
+      appearance:none;
+      border:1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size:13px;
+      padding:9px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: .18s ease;
+      white-space:nowrap;
+      user-select:none;
+    }
+    .tab:hover{
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-color: rgba(255,255,255,.08);
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(122,167,255,.13);
+      border-color: rgba(122,167,255,.28);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25) inset;
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 340px;
+      justify-content:flex-end;
+    }
+    .iconbtn{
+      width:40px;height:40px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .iconbtn:hover{
+      transform: translateY(-1px);
+      border-color: var(--stroke2);
+      background: rgba(255,255,255,.06);
+    }
+    .iconbtn:active{ transform: translateY(0); }
+
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius: 999px;
+      display:flex;
+      align-items:center;
+      gap:9px;
+      cursor:pointer;
+      user-select:none;
+      transition:.18s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.14);
+    }
+    .pill:hover{ border-color: var(--stroke2); background: rgba(255,255,255,.06); }
+    .avatar{
+      width:28px;height:28px;
+      border-radius: 12px;
+      background:
+        radial-gradient(14px 14px at 30% 30%, rgba(255,255,255,.22), transparent 65%),
+        linear-gradient(135deg, rgba(255,77,77,.74), rgba(245,197,66,.62));
+      border:1px solid rgba(255,255,255,.16);
+      flex:0 0 auto;
+    }
+    .pill .who{ display:flex; flex-direction:column; line-height:1.05; }
+    .pill .who b{ font-size:12.8px; font-weight:700; letter-spacing:.2px; }
+    .pill .who small{ font-size:11px; color: var(--muted); }
+
+    .menu{ position:relative; }
+    .dropdown{
+      position:absolute;
+      right:0;
+      top: calc(100% + 10px);
+      width: 260px;
+      background: rgba(10,12,22,.94);
+      border:1px solid var(--stroke2);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:none;
+    }
+    .dropdown.open{ display:block; }
+    .dropdown .head{
+      padding:12px 12px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .dropdown .head .minia{
+      width:34px;height:34px;border-radius:14px;
+      background: linear-gradient(135deg, rgba(122,167,255,.60), rgba(51,209,122,.55));
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .dropdown .head b{ display:block; font-size:13px; }
+    .dropdown .head small{ color: var(--muted); font-size:11px; display:block; margin-top:2px; }
+    .dropdown button{
+      width:100%;
+      padding:11px 12px;
+      text-align:left;
+      border:0;
+      background: transparent;
+      color: var(--text);
+      cursor:pointer;
+      font-size:13px;
+      transition:.15s ease;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dropdown button:hover{ background: rgba(255,255,255,.06); }
+    .dropdown button.danger{ color: #ffb3b3; }
+
+    /* ===== MAIN ===== */
+    .main{
+      width:min(1260px, calc(100% - 32px));
+      margin: 18px auto 40px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .header-row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .page-title{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .badge{
+      font-size:12px;
+      padding:7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      letter-spacing:.2px;
+      height: fit-content;
+    }
+    .page-title h2{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:.2px;
+      line-height:1.1;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color: var(--muted);
+      font-size:12px;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+.search{
+  position:relative;
+  width:320px;
+}
+
+.search input{
+  width:100%;
+  height:42px;
+  padding:0 40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:#0a0a0a;
+  color:#ffffff;
+  font-size:14px;
+  outline:none;
+}
+
+.search input::placeholder{
+  color:rgba(255,255,255,0.4);
+}
+
+.search input:focus{
+  border-color:#7aa7ff;
+  box-shadow:0 0 0 3px rgba(122,167,255,0.25);
+}
+
+.search-icon{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(255,255,255,0.6);
+  pointer-events:none;
+}
+
+.clear-icon{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(255,255,255,0.6);
+  cursor:pointer;
+  display:none;
+}
+
+.clear-icon:hover{
+  color:#ffffff;
+}
+
+
+    .select{
+      height:44px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 0 12px;
+      outline:none;
+      cursor:pointer;
+      min-width: 190px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+    }
+
+    .btn{
+      height:40px;
+      padding:0 12px;
+      border-radius: 14px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor:pointer;
+      transition:.18s ease;
+      font-size:12.8px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+    }
+    .btn:hover{
+      border-color: var(--stroke2);
+      background: rgba(255,255,255,.06);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0); }
+    .btn.primary{
+      border-color: rgba(122,167,255,.34);
+      background: rgba(122,167,255,.14);
+    }
+    .btn.primary:hover{
+      border-color: rgba(122,167,255,.50);
+      background: rgba(122,167,255,.18);
+    }
+    .btn.good{
+      border-color: rgba(51,209,122,.34);
+      background: rgba(51,209,122,.14);
+    }
+    .btn.bad{
+      border-color: rgba(255,77,77,.30);
+      background: rgba(255,77,77,.12);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      align-items:start;
+    }
+
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      position:relative;
+    }
+    .card .c-head{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .card .c-head b{
+      font-size:13px;
+      letter-spacing:.2px;
+    }
+    .card .c-body{ padding: 14px 16px; }
+
+    /* ===== Stat Cards (match mockup + cooler) ===== */
+    .stat{
+      min-height: 126px;
+      padding: 18px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .stat .left{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .stat .title{
+      font-size:14px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .stat .value{
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.2px;
+      line-height:1;
+    }
+    .stat .desc{
+      font-size:12.5px;
+      color: var(--muted);
+      line-height:1.25;
+    }
+    .spark{
+      width:90px;height:56px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .spark canvas{ width:100%; height:100%; }
+
+    .stat.red{ border-color: rgba(255,77,77,.50); }
+    .stat.red:before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width:5px;
+      background: rgba(255,77,77,.88);
+    }
+    .stat.blue{ border-color: rgba(122,167,255,.50); }
+    .stat.blue:before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width:5px;
+      background: rgba(122,167,255,.88);
+    }
+    .stat.green{ border-color: rgba(51,209,122,.50); }
+    .stat.green:before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width:5px;
+      background: rgba(51,209,122,.88);
+    }
+
+    /* ===== Mini widgets row ===== */
+    .mini-row{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap:14px;
+      grid-column: 1 / -1;
+    }
+
+    /* ===== Kanban ===== */
+    .kanban{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:12px;
+    }
+    .lane{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      overflow:hidden;
+      min-height: 260px;
+      display:flex;
+      flex-direction:column;
+    }
+    .lane .l-head{
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .lane .l-head .name{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:12.8px;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.35);
+    }
+    .dot.new{ background: rgba(122,167,255,.88); }
+    .dot.prog{ background: rgba(245,197,66,.88); }
+    .dot.rep{ background: rgba(51,209,122,.88); }
+    .dot.scr{ background: rgba(255,77,77,.88); }
+    .count{
+      font-size:12px;
+      color: var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      padding:4px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+    }
+    .lane .l-body{
+      padding: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+    }
+    .kcard{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.045);
+      padding: 10px 10px;
+      cursor:grab;
+      user-select:none;
+      transition:.16s ease;
+      box-shadow: 0 10px 20px rgba(0,0,0,.10);
+    }
+    .kcard:hover{
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      transform: translateY(-1px);
+    }
+    .kcard:active{ cursor:grabbing; transform: translateY(0); }
+    .kcard .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .kcard .subj{ font-weight:800; font-size:12.8px; line-height:1.2; }
+    .kcard .meta{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      color: var(--muted);
+      font-size:11.5px;
+    }
+    .pillmini{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      padding:4px 8px;
+      border-radius: 999px;
+      white-space:nowrap;
+    }
+    .badgeOver{
+      color:#ffb3b3;
+      border-color: rgba(255,77,77,.28);
+      background: rgba(255,77,77,.10);
+    }
+    .lane.dragover{
+      outline: 2px solid rgba(122,167,255,.35);
+      box-shadow: 0 0 0 6px rgba(122,167,255,.10);
+    }
+
+    /* ===== Mini Calendar ===== */
+    .cal{
+      display:grid;
+      gap:10px;
+    }
+    /* ✅ Fix dropdown text visibility */
+select{
+  color: rgba(255,255,255,.92);
+  background: rgba(10,12,22,.85);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+/* Dropdown items (the opened list) */
+select option{
+  background: #0b1020;   /* dark background */
+  color: #ffffff;        /* visible text */
+}
+
+/* If you have optgroup */
+select optgroup{
+  background: #0b1020;
+  color: #ffffff;
+}
+
+    .cal .monthbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 0 2px;
+    }
+    .cal .monthbar b{ font-size:13px; }
+    .cal .monthbar .navbtn{
+      width:36px;height:36px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+      transition:.16s ease;
+      display:grid;place-items:center;
+    }
+    .cal .monthbar .navbtn:hover{ background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.16); transform: translateY(-1px); }
+    .calgrid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:8px;
+    }
+    .dow{
+      font-size:11px;
+      color: rgba(255,255,255,.55);
+      text-align:center;
+      padding:4px 0;
+    }
+    .logo{
+  width:40px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.8));
+}
+.logo{
+  width:50px;
+  height:50px;
+}
+
+    .day{
+      height:40px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: rgba(255,255,255,.78);
+      font-size:12px;
+      cursor:pointer;
+      position:relative;
+      transition:.14s ease;
+    }
+    .day:hover{ background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.14); transform: translateY(-1px); }
+    .day.muted{ opacity:.40; }
+    .day.today{
+      border-color: rgba(122,167,255,.35);
+      box-shadow: 0 0 0 4px rgba(122,167,255,.10);
+    }
+    .dotmark{
+      width:7px;height:7px;border-radius:999px;
+      position:absolute;
+      bottom:6px;
+      background: rgba(51,209,122,.85);
+    }
+    .dotmark.warn{ background: rgba(245,197,66,.85); }
+    .dotmark.bad{ background: rgba(255,77,77,.85); }
+
+    /* ===== Table ===== */
+    .tableWrap{ overflow:auto; }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      min-width: 920px;
+    }
+    thead th{
+      text-align:left;
+      font-weight:750;
+      color: rgba(255,255,255,.82);
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.22);
+      background: rgba(255,255,255,.02);
+      white-space:nowrap;
+      cursor:pointer;
+      user-select:none;
+      position:relative;
+    }
+    thead th .sort{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform: translateY(-50%);
+      opacity:.55;
+      font-size:11px;
+    }
+    tbody td{
+      padding: 14px 16px;
+      border-bottom: 1px dashed rgba(255,255,255,.18);
+      color: rgba(255,255,255,.88);
+    }
+    tbody tr{
+      cursor:pointer;
+      transition:.12s ease;
+    }
+    tbody tr:hover{ background: rgba(255,255,255,.03); }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.90);
+      white-space:nowrap;
+    }
+    .tag.new{ border-color: rgba(122,167,255,.26); background: rgba(122,167,255,.10); }
+    .tag.progress{ border-color: rgba(245,197,66,.26); background: rgba(245,197,66,.10); }
+    .tag.repaired{ border-color: rgba(51,209,122,.26); background: rgba(51,209,122,.10); }
+    .tag.scrap{ border-color: rgba(255,77,77,.26); background: rgba(255,77,77,.10); }
+
+    .overdueStrip{
+      position:relative;
+      padding-left: 12px;
+    }
+    .overdueStrip:before{
+      content:"";
+      position:absolute;
+      left:0;
+      top: 8px;
+      bottom: 8px;
+      width:4px;
+      border-radius:999px;
+      background: rgba(255,77,77,.86);
+    }
+    .overText{ color:#ffb3b3; font-weight:800; }
+
+    /* ===== Toast ===== */
+    .toast{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      width:min(380px, calc(100% - 36px));
+      background: rgba(10,12,22,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      display:none;
+      gap:10px;
+      align-items:flex-start;
+      z-index:200;
+    }
+    .toast.show{ display:flex; }
+    .toast .ticon{
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .toast b{ display:block; font-size:13px; }
+    .toast small{ color: var(--muted); display:block; margin-top:2px; line-height:1.25; }
+    .toast .close{
+      margin-left:auto;
+      width:34px;height:34px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+    }
+
+    /* ===== Modal (Quick Add/Edit + Background Settings) ===== */
+    .backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 120;
+    }
+    .backdrop.open{ display:flex; }
+    .modal{
+      width:min(640px, 100%);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,22,.95);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .mhead{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:10px;
+    }
+    .modal .mhead b{ font-size:14px; letter-spacing:.2px; }
+    .modal .mbody{
+      padding: 14px 16px 16px;
+      display:grid;
+      gap:10px;
+    }
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color: var(--muted);
+      margin-bottom:6px;
+    }
+    .field input,.field select,.field textarea{
+      width:100%;
+      height:44px;
+      border-radius: 16px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 0 12px;
+      outline:none;
+    }
+    .field textarea{
+      min-height: 90px;
+      padding: 10px 12px;
+      height:auto;
+      resize: vertical;
+    }
+    .field input:focus,.field select:focus,.field textarea:focus{
+      border-color: rgba(122,167,255,.42);
+      box-shadow: 0 0 0 4px rgba(122,167,255,.12);
+    }
+    .modal .mfoot{
+      padding: 12px 16px;
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      flex-wrap:wrap;
+    }
+
+    /* ===== Right Drawer (Request details) ===== */
+    .drawerBack{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      z-index: 140;
+    }
+    .drawerBack.open{ display:block; }
+    .drawer{
+      position:fixed;
+      top:0;
+      right:-520px;
+      height:100%;
+      width:min(520px, 100%);
+      background: rgba(10,12,22,.96);
+      border-left:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      z-index: 150;
+      transition: right .22s ease;
+      display:flex;
+      flex-direction:column;
+    }
+    .drawer.open{ right:0; }
+    .drawer .dhead{
+      padding: 14px 16px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .drawer .dhead b{ font-size:14px; }
+    .drawer .dbody{
+      padding: 14px 16px;
+      overflow:auto;
+      display:grid;
+      gap:12px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:8px 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .kv .k{ color: var(--muted); font-size:12px; }
+    .kv .v{ font-size:13px; font-weight:700; }
+    .drawer .dfoot{
+      padding: 12px 16px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+    }
+
+    /* ===== Background settings mini UI ===== */
+    .bgpreview{
+      height:120px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        linear-gradient(180deg, rgba(7,10,18,.60), rgba(11,16,32,.70)),
+        var(--bg-img);
+      background-size: auto, cover;
+      background-position: center, center;
+      background-repeat: no-repeat, no-repeat;
+      position:relative;
+      overflow:hidden;
+    }
+    .bgpreview:after{
+      content:"Preview";
+      position:absolute;
+      left:12px; bottom:10px;
+      font-size:12px;
+      color: rgba(255,255,255,.75);
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+    }
+    .range{
+      display:flex;align-items:center;gap:10px;
+    }
+    input[type="range"]{ width:100%; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1100px){
+      .mini-row{ grid-template-columns: 1fr; }
+      .kanban{ grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 720px){
+      .actions{ min-width:auto; }
+      .brand{ min-width:auto; }
+      .row2{ grid-template-columns: 1fr; }
+      .kanban{ grid-template-columns: 1fr; }
+      table{ min-width: 820px; }
+    }
+        .logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+  filter: none;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- ===== TOP NAVBAR ===== -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo">
+  <img src="https://images.scalebranding.com/g-guard-logo-d52d61e8-b67f-414d-9da5-69da06892851.jpg" alt="GearGuard Logo">
+</div>
+
+          <div>
+            <h1>GearGuard</h1>
+            <span>Maintenance Tracker</span>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Primary">
+          <a href="{% url 'maintainance' %}" style="text-decoration:none">
+    <button class="tab" data-tab="maintenance">Maintenance</button>
+  </a>
+          <button class="tab active" data-tab="dashboard">Dashboard</button>
+           <a href="{% url 'maintenance_calendar' %}" style="text-decoration:none">
+    <button class="tab" data-tab="mainenance_calendar">Maintenance Calendar</button>
+  </a>
+  <a href="{% url 'equipment' %}" style="text-decoration:none">
+    <button class="tab" data-tab="equipment">Equipment</button>
+  </a>
+  <a href="{% url 'reporting' %}" style="text-decoration:none">
+    <button class="tab" data-tab="reporting">Reporting</button>
+  </a>
+  <a href="{% url 'teams' %}" style="text-decoration:none">
+    <button class="tab" data-tab="teams">Teams</button>
+  </a>
+     
+        </nav>
+
+        <div class="actions">
+          <button class="iconbtn" id="refreshBtn" title="Refresh dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M20 4v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <button class="iconbtn" id="bgBtn" title="Background settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M3 15l4-4a2 2 0 0 1 3 0l2 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 13l1-1a2 2 0 0 1 3 0l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="9" cy="8.5" r="1.2" fill="currentColor"/>
+            </svg>
+          </button>
+
+          <button class="iconbtn" id="themeBtn" title="Toggle contrast">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <div class="menu">
+            <div class="pill" id="userPill" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
+              <div class="avatar" aria-hidden="true"></div>
+              <div class="who">
+                <b>jyotier</b>
+                <small>Current account</small>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="opacity:.8" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="dropdown" id="userDropdown" role="menu">
+              <div class="head">
+                <div class="minia" aria-hidden="true"></div>
+                <div>
+                  <b>jyotier</b>
+                  <small>Signed in</small>
+                </div>
+              </div>
+              <button type="button" class="danger" id="logoutBtn">
+                  <a href="{% url 'signup' %}" style="text-decoration:none">
+    <button class="tab" data-tab="signup">Logout</button>
+  </a>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+      <div class="header-row">
+        <div class="page-title">
+          <span class="badge">New</span>
+          <div>
+            <h2>Dashboard</h2>
+            <p class="subtitle">Track critical equipment, technician load, open requests, and workflow progress.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search" aria-label="Search">
+           
+  <span class="search-icon">🔍</span>
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Search requests, equipment, technician..."
+  />
+  <span class="clear-icon" id="clearSearch">✕</span>
+
+          </div>
+
+          <select class="select" id="filterSelect" title="Filter">
+            <option value="all">All Requests</option>
+            <option value="new">New</option>
+            <option value="in_progress">In Progress</option>
+            <option value="repaired">Repaired</option>
+            <option value="scrap">Scrap</option>
+            <option value="overdue">Overdue</option>
+            <option value="preventive">Preventive</option>
+            <option value="corrective">Corrective</option>
+          </select>
+
+          <button class="btn primary" id="quickAddBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Quick Add
+          </button>
+
+          <button class="btn" id="exportBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== STATS ===== -->
+      <section class="grid" aria-label="Stats">
+        <div class="card stat red" style="grid-column: 1 / span 4;">
+          <div class="left">
+            <div class="title" style="color: rgba(255,77,77,.96);">Critical Equipment</div>
+            <div class="value" id="statCritical">0 Units</div>
+            <div class="desc" id="statCriticalDesc">(Health &lt; 30%)</div>
+          </div>
+          <div class="spark" title="Trend (demo)">
+            <canvas id="sparkCritical" width="180" height="110"></canvas>
+          </div>
+        </div>
+
+        <div class="card stat blue" style="grid-column: 5 / span 4;">
+          <div class="left">
+            <div class="title" style="color: rgba(122,167,255,.98);">Technician Load</div>
+            <div class="value" id="statLoad">0% Utilized</div>
+            <div class="desc" id="statLoadDesc">(Assign Carefully)</div>
+          </div>
+          <div class="spark" title="Load (demo)">
+            <canvas id="sparkLoad" width="180" height="110"></canvas>
+          </div>
+        </div>
+
+        <div class="card stat green" style="grid-column: 9 / span 4;">
+          <div class="left">
+            <div class="title" style="color: rgba(51,209,122,.98);">Open Requests</div>
+            <div class="value" id="statOpen">0 Pending</div>
+            <div class="desc" id="statOpenDesc">0 Overdue</div>
+          </div>
+          <div class="spark" title="Requests (demo)">
+            <canvas id="sparkOpen" width="180" height="110"></canvas>
+          </div>
+        </div>
+
+        <!-- ===== Mini Row: Kanban + Calendar/Charts ===== -->
+        <div class="mini-row">
+          <div class="card">
+            <div class="c-head">
+              <b>Workflow Board (Drag & Drop)</b>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" id="resetDemoBtn" title="Reset demo data">Reset Demo</button>
+                <button class="btn good" id="autoAssignBtn" title="Auto-assign technicians (demo)">Auto Assign</button>
+              </div>
+            </div>
+            <div class="c-body">
+              <div class="kanban" id="kanban">
+                <!-- lanes injected -->
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="c-head">
+              <b>Preventive Schedule (Mini Calendar)</b>
+              <button class="btn" id="todayBtn">Today</button>
+            </div>
+            <div class="c-body">
+              <div class="cal">
+                <div class="monthbar">
+                  <button class="navbtn" id="prevMonth" aria-label="Previous month">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <b id="monthLabel">—</b>
+                  <button class="navbtn" id="nextMonth" aria-label="Next month">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="calgrid" id="dowRow"></div>
+                <div class="calgrid" id="calGrid"></div>
+
+                <div style="display:grid;gap:8px;margin-top:8px">
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px">
+                    <span style="display:inline-flex;align-items:center;gap:8px"><span class="dotmark" style="position:static"></span> Preventive</span>
+                    <span style="display:inline-flex;align-items:center;gap:8px"><span class="dotmark warn" style="position:static"></span> Due Soon</span>
+                    <span style="display:inline-flex;align-items:center;gap:8px"><span class="dotmark bad" style="position:static"></span> Overdue</span>
+                  </div>
+                  <button class="btn primary" id="scheduleOnSelected">Schedule on Selected Date</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== Requests Table ===== -->
+        <div class="card" style="grid-column: 1 / -1;">
+          <div class="c-head">
+            <b>Requests</b>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="btn" style="cursor:default">
+                Showing <b id="rowCount" style="margin-left:6px">0</b>
+              </span>
+              <span class="btn bad" style="cursor:default">
+                Overdue <b id="overdueCount" style="margin-left:6px">0</b>
+              </span>
+              <span class="btn" style="cursor:default;border-color:rgba(245,197,66,.26);background:rgba(245,197,66,.10)">
+                Preventive <b id="prevCount" style="margin-left:6px">0</b>
+              </span>
+              <button class="btn" id="resetBtn">Reset Filters</button>
+            </div>
+          </div>
+          <div class="tableWrap">
+            <table id="reqTable">
+              <thead>
+                <tr>
+                  <th data-key="subject">Subject <span class="sort" id="sort-subject">↕</span></th>
+                  <th data-key="equipment">Equipment <span class="sort" id="sort-equipment">↕</span></th>
+                  <th data-key="employee">Employee <span class="sort" id="sort-employee">↕</span></th>
+                  <th data-key="technician">Technician <span class="sort" id="sort-technician">↕</span></th>
+                  <th data-key="category">Category <span class="sort" id="sort-category">↕</span></th>
+                  <th data-key="type">Type <span class="sort" id="sort-type">↕</span></th>
+                  <th data-key="stage">Stage <span class="sort" id="sort-stage">↕</span></th>
+                  <th data-key="dueDate">Due <span class="sort" id="sort-dueDate">↕</span></th>
+                  <th data-key="company">Company <span class="sort" id="sort-company">↕</span></th>
+                </tr>
+              </thead>
+              <tbody id="reqTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== TOAST ===== -->
+    <div class="toast" id="toast">
+      <div class="ticon" id="toastIcon">✅</div>
+      <div>
+        <b id="toastTitle">Saved</b>
+        <small id="toastMsg">Action completed.</small>
+      </div>
+      <button class="close" id="toastClose" title="Close">✕</button>
+    </div>
+
+    <!-- ===== MODAL: Quick Add / Edit ===== -->
+    <div class="backdrop" id="modalBack">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="mhead">
+          <b id="modalTitle">Quick Add Request</b>
+          <button class="iconbtn" id="closeModalBtn" title="Close" style="width:40px;height:40px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="mbody">
+          <div class="row2">
+            <div class="field">
+              <label>Subject</label>
+              <input id="fSubject" placeholder="e.g., Leaking oil / Printer jam" />
+            </div>
+            <div class="field">
+              <label>Equipment</label>
+              <input id="fEquipment" placeholder="e.g., Printer 01 / Laptop 12" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Employee</label>
+              <input id="fEmployee" placeholder="e.g., Mitchell Admin" />
+            </div>
+            <div class="field">
+              <label>Technician</label>
+              <input id="fTechnician" placeholder="e.g., Aka Foster" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Category</label>
+              <select id="fCategory">
+                <option value="computer">computer</option>
+                <option value="it">it</option>
+                <option value="mechanical">mechanical</option>
+                <option value="electrical">electrical</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="fType">
+                <option value="corrective">Corrective</option>
+                <option value="preventive">Preventive</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Stage</label>
+              <select id="fStage">
+                <option value="new">New</option>
+                <option value="in_progress">In Progress</option>
+                <option value="repaired">Repaired</option>
+                <option value="scrap">Scrap</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Due Date</label>
+              <input id="fDue" type="date" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Company</label>
+              <input id="fCompany" placeholder="e.g., My company" />
+            </div>
+            <div class="field">
+              <label>Estimated Hours</label>
+              <input id="fHours" type="number" min="0" step="0.5" placeholder="e.g., 2.5" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notes</label>
+            <textarea id="fNotes" placeholder="Optional notes..."></textarea>
+          </div>
+        </div>
+
+        <div class="mfoot">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn bad" id="deleteBtn" style="display:none">Delete</button>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-left:auto">
+            <button class="btn" id="cancelBtn">Cancel</button>
+            <button class="btn primary" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MODAL: Background Settings ===== -->
+    <div class="backdrop" id="bgBack">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bgTitle">
+        <div class="mhead">
+          <b id="bgTitle">Background Settings</b>
+          <button class="iconbtn" id="closeBgBtn" title="Close" style="width:40px;height:40px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="mbody">
+          <div class="bgpreview" id="bgPreview"></div>
+
+          <div class="field">
+            <label>Background Image URL</label>
+            <input id="bgUrl" placeholder="Paste image URL (https://...jpg/png/webp)" />
+          </div>
+
+          <div class="field">
+            <label>Or upload image</label>
+            <input id="bgFile" type="file" accept="image/*" />
+          </div>
+
+          <div class="field">
+            <label>Image opacity</label>
+            <div class="range">
+              <input id="bgOpacity" type="range" min="0" max="60" value="22" />
+              <span id="bgOpacityLabel" style="color:var(--muted);font-size:12px;min-width:44px;text-align:right">22%</span>
+            </div>
+          </div>
+        </div>
+        <div class="mfoot">
+          <button class="btn" id="bgClear">Remove Background</button>
+          <div style="display:flex;gap:10px;margin-left:auto;flex-wrap:wrap">
+            <button class="btn" id="bgCancel">Cancel</button>
+            <button class="btn primary" id="bgSave">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Drawer ===== -->
+    <div class="drawerBack" id="drawerBack"></div>
+    <aside class="drawer" id="drawer" aria-label="Request details">
+      <div class="dhead">
+        <b id="dTitle">Request</b>
+        <button class="iconbtn" id="closeDrawer" title="Close" style="width:40px;height:40px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="dbody" id="dBody">
+        <!-- injected -->
+      </div>
+      <div class="dfoot">
+        <button class="btn" id="editFromDrawer">Edit</button>
+        <button class="btn primary" id="markProgress">Move → In Progress</button>
+        <button class="btn good" id="markRepaired">Move → Repaired</button>
+      </div>
+    </aside>
+    {{ requests|json_script:"requests-data" }}
+    
+    <script>
+      // =============================
+      // DEMO DATA (swap with Django)
+      // =============================
+      const demoSeed = () => ([
+        {
+          id: uid(),
+          subject: "Test activity",
+          equipment: "Laptop 12",
+          employee: "Mitchell Admin",
+          technician: "Aka Foster",
+          category: "computer",
+          type: "corrective",
+          stage: "new",
+          dueDate: isoDate(addDays(new Date(), 1)),
+          company: "My company",
+          hours: 1.5,
+          notes: "Demo request created for dashboard preview.",
+          createdAt: Date.now(),
+          health: 65
+        },
+        {
+          id: uid(),
+          subject: "Printer 01 paper jam",
+          equipment: "Printer 01",
+          employee: "Ops Desk",
+          technician: "Riya Patel",
+          category: "it",
+          type: "corrective",
+          stage: "in_progress",
+          dueDate: isoDate(addDays(new Date(), -1)), // overdue
+          company: "My company",
+          hours: 2,
+          notes: "Overdue example to show red indicator.",
+          createdAt: Date.now() - 1000000,
+          health: 25
+        },
+        {
+          id: uid(),
+          subject: "Monthly CNC lubrication",
+          equipment: "CNC Machine A",
+          employee: "Production",
+          technician: "Karan Mehta",
+          category: "mechanical",
+          type: "preventive",
+          stage: "new",
+          dueDate: isoDate(addDays(new Date(), 3)),
+          company: "My company",
+          hours: 0.0,
+          notes: "Preventive schedule sample.",
+          createdAt: Date.now() - 2000000,
+          health: 40
+        },
+        {
+          id: uid(),
+          subject: "Replace worn belt",
+          equipment: "Conveyor 02",
+          employee: "Production",
+          technician: "Karan Mehta",
+          category: "mechanical",
+          type: "corrective",
+          stage: "repaired",
+          dueDate: isoDate(addDays(new Date(), -4)),
+          company: "My company",
+          hours: 3,
+          notes: "Completed job sample.",
+          createdAt: Date.now() - 3000000,
+          health: 78
+        },
+        {
+          id: uid(),
+          subject: "Battery check (UPS)",
+          equipment: "UPS Room 1",
+          employee: "IT",
+          technician: "Riya Patel",
+          category: "electrical",
+          type: "preventive",
+          stage: "new",
+          dueDate: isoDate(addDays(new Date(), 0)),
+          company: "My company",
+          hours: 0,
+          notes: "Scheduled today.",
+          createdAt: Date.now() - 4000000,
+          health: 55
+        }
+      ]);
+
+      const state = {
+        requests: loadLS("gg_requests") ?? demoSeed(),
+        sort: { key: "createdAt", dir: "desc" },
+        selectedId: null,
+        editingId: null,
+        themeHighContrast: loadLS("gg_contrast") ?? false,
+        bg: loadLS("gg_bg") ?? { url: "", dataUrl: "", opacity: 22 },
+        calendar: {
+          view: new Date(),
+          selected: new Date(),
+        }
+      };
+
+      // =============================
+      // DOM helpers
+      // =============================
+      const $ = (q) => document.querySelector(q);
+      const $$ = (q) => [...document.querySelectorAll(q)];
+      const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+      function uid(){
+        return "r_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      }
+      function escapeHTML(str){
+        return String(str)
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+      function loadLS(key){
+        try{
+          const v = localStorage.getItem(key);
+          return v ? JSON.parse(v) : null;
+        }catch{ return null; }
+      }
+      function saveLS(key, val){
+        localStorage.setItem(key, JSON.stringify(val));
+      }
+
+      function isoDate(d){
+        const dt = new Date(d);
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth()+1).padStart(2,"0");
+        const da = String(dt.getDate()).padStart(2,"0");
+        return `${y}-${m}-${da}`;
+      }
+      function addDays(d, days){
+        const x = new Date(d);
+        x.setDate(x.getDate() + days);
+        return x;
+      }
+      function parseISO(s){
+        const [y,m,d] = (s||"").split("-").map(Number);
+        if(!y||!m||!d) return null;
+        const dt = new Date(y, m-1, d);
+        dt.setHours(0,0,0,0);
+        return dt;
+      }
+      function isOverdue(req){
+        if(!req.dueDate) return false;
+        if(req.stage === "repaired" || req.stage === "scrap") return false;
+        const due = parseISO(req.dueDate);
+        if(!due) return false;
+        const now = new Date(); now.setHours(0,0,0,0);
+        return due < now;
+      }
+      function isDueSoon(req){
+        if(!req.dueDate) return false;
+        if(req.stage === "repaired" || req.stage === "scrap") return false;
+        const due = parseISO(req.dueDate);
+        if(!due) return false;
+        const now = new Date(); now.setHours(0,0,0,0);
+        const diffDays = Math.round((due - now) / (1000*60*60*24));
+        return diffDays >= 0 && diffDays <= 2;
+      }
+
+      function stageTag(stage){
+        if(stage === "new") return { label:"New", cls:"tag new" };
+        if(stage === "in_progress") return { label:"In Progress", cls:"tag progress" };
+        if(stage === "repaired") return { label:"Repaired", cls:"tag repaired" };
+        if(stage === "scrap") return { label:"Scrap", cls:"tag scrap" };
+        return { label:stage, cls:"tag" };
+      }
+
+      // =============================
+      // Apply background settings
+      // =============================
+      function applyBackground(){
+        const {url, dataUrl, opacity} = state.bg;
+        const img = dataUrl || url;
+        if(img){
+          document.documentElement.style.setProperty("--bg-img", `url("${img}")`);
+        }else{
+          document.documentElement.style.setProperty("--bg-img", "none");
+        }
+        document.documentElement.style.setProperty("--bg-img-opacity", (opacity/100).toFixed(2));
+        // We emulate opacity by stronger/darker overlay in main bg (already there).
+        // Additionally reduce visibility using a fixed pseudo is heavy; keep simple.
+      }
+
+      // =============================
+      // Stats + charts
+      // =============================
+      function drawSpark(canvasId, values){
+        const c = document.getElementById(canvasId);
+        if(!c) return;
+        const ctx = c.getContext("2d");
+        const w = c.width, h = c.height;
+
+        ctx.clearRect(0,0,w,h);
+
+        // background
+        ctx.fillStyle = "rgba(255,255,255,0.02)";
+        ctx.fillRect(0,0,w,h);
+
+        // grid lines
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.lineWidth = 1;
+        for(let i=1;i<4;i++){
+          const y = (h/4)*i;
+          ctx.beginPath();
+          ctx.moveTo(0,y);
+          ctx.lineTo(w,y);
+          ctx.stroke();
+        }
+
+        if(!values || values.length < 2) return;
+
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        const pad = 10;
+
+        const xStep = (w - pad*2) / (values.length - 1);
+
+        // line
+        ctx.strokeStyle = "rgba(255,255,255,0.65)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        values.forEach((v,i)=>{
+          const t = (max === min) ? 0.5 : (v - min) / (max - min);
+          const x = pad + xStep * i;
+          const y = (h - pad) - t * (h - pad*2);
+          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+        ctx.stroke();
+
+        // fill under
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.lineTo(w-pad, h-pad);
+        ctx.lineTo(pad, h-pad);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function computeStats(reqs){
+        // critical equipment = count of requests whose equipment health < 30 OR category mechanical+overdue (demo)
+        const critical = reqs.filter(r => (r.health ?? 100) < 30).length;
+
+        // technician load demo = based on active jobs count
+        const active = reqs.filter(r => r.stage === "new" || r.stage === "in_progress").length;
+        const load = clamp(30 + active*10, 0, 98);
+
+        const open = reqs.filter(r => r.stage !== "repaired" && r.stage !== "scrap").length;
+        const overdue = reqs.filter(r => isOverdue(r)).length;
+
+        return { critical, load, open, overdue };
+      }
+
+      // =============================
+      // Filtering + sorting
+      // =============================
+      function getFiltered(){
+        const q = ($("#searchInput").value || "").trim().toLowerCase();
+        const filter = $("#filterSelect").value;
+
+        let list = state.requests.slice();
+
+        // text search
+        if(q){
+          list = list.filter(r => {
+            const hay = `${r.subject} ${r.equipment} ${r.employee} ${r.technician} ${r.category} ${r.type} ${r.stage} ${r.company}`.toLowerCase();
+            return hay.includes(q);
+          });
+        }
+
+        // filters
+        if(filter === "new") list = list.filter(r => r.stage === "new");
+        if(filter === "in_progress") list = list.filter(r => r.stage === "in_progress");
+        if(filter === "repaired") list = list.filter(r => r.stage === "repaired");
+        if(filter === "scrap") list = list.filter(r => r.stage === "scrap");
+        if(filter === "overdue") list = list.filter(r => isOverdue(r));
+        if(filter === "preventive") list = list.filter(r => r.type === "preventive");
+        if(filter === "corrective") list = list.filter(r => r.type === "corrective");
+
+        // sort
+        const {key, dir} = state.sort;
+        list.sort((a,b)=>{
+          const av = a[key];
+          const bv = b[key];
+
+          // date sort for dueDate
+          if(key === "dueDate"){
+            const ad = parseISO(av)?.getTime() ?? 0;
+            const bd = parseISO(bv)?.getTime() ?? 0;
+            return dir === "asc" ? ad - bd : bd - ad;
+          }
+
+          // number sort
+          if(typeof av === "number" || typeof bv === "number"){
+            const an = Number(av ?? 0);
+            const bn = Number(bv ?? 0);
+            return dir === "asc" ? an - bn : bn - an;
+          }
+
+          // string sort
+          const as = String(av ?? "").toLowerCase();
+          const bs = String(bv ?? "").toLowerCase();
+          if(as < bs) return dir === "asc" ? -1 : 1;
+          if(as > bs) return dir === "asc" ? 1 : -1;
+          return 0;
+        });
+
+        return list;
+      }
+
+      function setSort(key){
+        if(state.sort.key === key){
+          state.sort.dir = state.sort.dir === "asc" ? "desc" : "asc";
+        }else{
+          state.sort.key = key;
+          state.sort.dir = "asc";
+        }
+        renderAll();
+      }
+
+      function updateSortIcons(){
+        // reset
+        $$("thead th").forEach(th=>{
+          const k = th.dataset.key;
+          const sp = $("#sort-" + k);
+          if(sp) sp.textContent = "↕";
+        });
+        const sp = $("#sort-" + state.sort.key);
+        if(sp) sp.textContent = state.sort.dir === "asc" ? "↑" : "↓";
+      }
+
+      // =============================
+      // Render table
+      // =============================
+      function renderTable(){
+        const tbody = $("#reqTbody");
+        const list = getFiltered();
+        tbody.innerHTML = "";
+
+        // counters
+        $("#rowCount").textContent = String(list.length);
+        $("#overdueCount").textContent = String(list.filter(isOverdue).length);
+        $("#prevCount").textContent = String(list.filter(r=>r.type==="preventive").length);
+
+        if(list.length === 0){
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="9" style="padding:18px 16px;color:rgba(255,255,255,.62)">No requests found. Try clearing search or changing filter.</td>`;
+          tbody.appendChild(tr);
+          return;
+        }
+
+        list.forEach(r=>{
+          const tr = document.createElement("tr");
+          tr.dataset.id = r.id;
+
+          const stage = stageTag(r.stage);
+          const overdue = isOverdue(r);
+          const due = r.dueDate ? r.dueDate : "—";
+
+          tr.innerHTML = `
+            <td class="${overdue ? "overdueStrip" : ""}">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font-weight:800">${escapeHTML(r.subject)}</span>
+                ${overdue ? `<span class="tag scrap" style="border-color:rgba(255,77,77,.35);background:rgba(255,77,77,.10)"><span class="overText">Overdue</span></span>` : ``}
+                ${r.type === "preventive" ? `<span class="tag" style="border-color:rgba(51,209,122,.26);background:rgba(51,209,122,.10)">Preventive</span>` : ``}
+              </div>
+            </td>
+            <td>${escapeHTML(r.equipment || "—")}</td>
+            <td>${escapeHTML(r.employee || "—")}</td>
+            <td>${escapeHTML(r.technician || "—")}</td>
+            <td>${escapeHTML(r.category || "—")}</td>
+            <td>${escapeHTML(r.type || "—")}</td>
+            <td><span class="${stage.cls}">${stage.label}</span></td>
+            <td>${escapeHTML(due)}</td>
+            <td>${escapeHTML(r.company || "—")}</td>
+          `;
+
+          tr.addEventListener("click", ()=> openDrawer(r.id));
+          tbody.appendChild(tr);
+        });
+      }
+
+      // =============================
+      // Kanban render + DnD
+      // =============================
+      const lanes = [
+        {key:"new", label:"New", dot:"new"},
+        {key:"in_progress", label:"In Progress", dot:"prog"},
+        {key:"repaired", label:"Repaired", dot:"rep"},
+        {key:"scrap", label:"Scrap", dot:"scr"},
+      ];
+
+      function renderKanban(){
+        const host = $("#kanban");
+        host.innerHTML = "";
+
+        const grouped = {};
+        lanes.forEach(l => grouped[l.key] = []);
+        getFiltered().forEach(r => {
+  if(grouped[r.stage]) grouped[r.stage].push(r);
+});
+
+
+        lanes.forEach(l=>{
+          const lane = document.createElement("div");
+          lane.className = "lane";
+          lane.dataset.stage = l.key;
+
+          const count = grouped[l.key].length;
+
+          lane.innerHTML = `
+            <div class="l-head">
+              <div class="name"><span class="dot ${l.dot}"></span>${l.label}</div>
+              <span class="count">${count}</span>
+            </div>
+            <div class="l-body" aria-label="${l.label} lane"></div>
+          `;
+
+          const body = lane.querySelector(".l-body");
+
+          grouped[l.key]
+            .slice()
+            .sort((a,b)=> (b.createdAt ?? 0) - (a.createdAt ?? 0))
+            .forEach(r=>{
+              const card = document.createElement("div");
+              card.className = "kcard";
+              card.draggable = true;
+              card.dataset.id = r.id;
+
+              const overdue = isOverdue(r);
+              const dueSoon = isDueSoon(r);
+
+              card.innerHTML = `
+                <div class="top">
+                  <div class="subj">${escapeHTML(r.subject)}</div>
+                  <div style="opacity:.7;font-size:12px">⋯</div>
+                </div>
+                <div class="meta">
+                  <span class="pillmini">🧰 ${escapeHTML(r.equipment || "—")}</span>
+                  <span class="pillmini">👤 ${escapeHTML(r.employee || "—")}</span>
+                  <span class="pillmini">🛠 ${escapeHTML(r.technician || "—")}</span>
+                  <span class="pillmini">${escapeHTML(r.category || "—")}</span>
+                  ${r.type === "preventive" ? `<span class="pillmini" style="border-color:rgba(51,209,122,.25);background:rgba(51,209,122,.08)">Preventive</span>` : ``}
+                  ${r.dueDate ? `<span class="pillmini ${overdue ? "badgeOver" : (dueSoon ? "" : "")}" style="${dueSoon && !overdue ? "border-color:rgba(245,197,66,.28);background:rgba(245,197,66,.10)" : ""}">
+                    📅 ${escapeHTML(r.dueDate)} ${overdue ? "• Overdue" : (dueSoon ? "• Due soon" : "")}
+                  </span>` : ``}
+                </div>
+              `;
+
+              card.addEventListener("click", (e)=>{
+                e.stopPropagation();
+                openDrawer(r.id);
+              });
+
+              card.addEventListener("dragstart", (e)=>{
+                e.dataTransfer.setData("text/plain", r.id);
+                e.dataTransfer.effectAllowed = "move";
+              });
+
+              body.appendChild(card);
+            });
+
+          // lane drop handling
+          lane.addEventListener("dragover", (e)=>{
+            e.preventDefault();
+            lane.classList.add("dragover");
+          });
+          lane.addEventListener("dragleave", ()=>{
+            lane.classList.remove("dragover");
+          });
+          lane.addEventListener("drop", (e)=>{
+            e.preventDefault();
+            lane.classList.remove("dragover");
+            const id = e.dataTransfer.getData("text/plain");
+            if(!id) return;
+            moveStage(id, l.key);
+          });
+
+          host.appendChild(lane);
+        });
+      }
+
+      function moveStage(id, stage){
+        const r = state.requests.find(x=>x.id===id);
+        if(!r) return;
+        r.stage = stage;
+
+        // Scrap logic (PS): indicate equipment no longer usable (demo flag + toast)
+        if(stage === "scrap"){
+          r.notes = (r.notes ? (r.notes + "\n\n") : "") + "⚠ Equipment marked unusable due to Scrap stage.";
+          toast("Scrap stage", "Request moved to Scrap — equipment marked unusable (demo note added).", "🗑️");
+        }else{
+          toast("Stage updated", `Moved to ${stage.replaceAll("_"," ")}`, "✅");
+        }
+
+        persist();
+        renderAll();
+      }
+
+      // =============================
+      // Drawer
+      // =============================
+      function openDrawer(id){
+        const r = state.requests.find(x=>x.id===id);
+        if(!r) return;
+        state.selectedId = id;
+
+        $("#drawerBack").classList.add("open");
+        $("#drawer").classList.add("open");
+
+        $("#dTitle").textContent = r.subject || "Request";
+
+        const stage = stageTag(r.stage);
+        const overdue = isOverdue(r);
+
+        $("#dBody").innerHTML = `
+          <div class="kv">
+            <div class="k">Stage</div>
+            <div class="v"><span class="${stage.cls}">${stage.label}</span> ${overdue ? `<span class="tag scrap" style="margin-left:8px;border-color:rgba(255,77,77,.35);background:rgba(255,77,77,.10)"><span class="overText">Overdue</span></span>` : ``}</div>
+
+            <div class="k">Type</div>
+            <div class="v">${escapeHTML(r.type || "—")}</div>
+
+            <div class="k">Equipment</div>
+            <div class="v">${escapeHTML(r.equipment || "—")}</div>
+
+            <div class="k">Category</div>
+            <div class="v">${escapeHTML(r.category || "—")}</div>
+
+            <div class="k">Employee</div>
+            <div class="v">${escapeHTML(r.employee || "—")}</div>
+
+            <div class="k">Technician</div>
+            <div class="v">${escapeHTML(r.technician || "—")}</div>
+
+            <div class="k">Due</div>
+            <div class="v">${escapeHTML(r.dueDate || "—")}</div>
+
+            <div class="k">Hours</div>
+            <div class="v">${escapeHTML((r.hours ?? "—") + "")}</div>
+
+            <div class="k">Company</div>
+            <div class="v">${escapeHTML(r.company || "—")}</div>
+          </div>
+
+          <div class="kv" style="grid-template-columns:1fr;gap:8px">
+            <div class="k">Notes</div>
+            <div class="v" style="white-space:pre-wrap;line-height:1.35">${escapeHTML(r.notes || "—")}</div>
+          </div>
+        `;
+
+        // drawer action buttons logic
+        $("#markProgress").disabled = (r.stage === "in_progress" || r.stage === "repaired" || r.stage === "scrap");
+        $("#markRepaired").disabled = (r.stage === "repaired" || r.stage === "scrap");
+
+        $("#markProgress").onclick = () => moveStage(r.id, "in_progress");
+        $("#markRepaired").onclick = () => moveStage(r.id, "repaired");
+        $("#editFromDrawer").onclick = () => openEditModal(r.id);
+      }
+
+      function closeDrawer(){
+        $("#drawerBack").classList.remove("open");
+        $("#drawer").classList.remove("open");
+      }
+
+      // =============================
+      // Modal (Add/Edit)
+      // =============================
+      function openAddModal(prefill={}){
+        state.editingId = null;
+        $("#modalTitle").textContent = "Quick Add Request";
+        $("#deleteBtn").style.display = "none";
+
+        $("#fSubject").value = prefill.subject ?? "";
+        $("#fEquipment").value = prefill.equipment ?? "";
+        $("#fEmployee").value = prefill.employee ?? "";
+        $("#fTechnician").value = prefill.technician ?? "";
+        $("#fCategory").value = prefill.category ?? "computer";
+        $("#fType").value = prefill.type ?? "corrective";
+        $("#fStage").value = prefill.stage ?? "new";
+        $("#fDue").value = prefill.dueDate ?? isoDate(new Date());
+        $("#fCompany").value = prefill.company ?? "My company";
+        $("#fHours").value = prefill.hours ?? "";
+        $("#fNotes").value = prefill.notes ?? "";
+
+        $("#modalBack").classList.add("open");
+        setTimeout(()=> $("#fSubject").focus(), 50);
+      }
+
+      function openEditModal(id){
+        const r = state.requests.find(x=>x.id===id);
+        if(!r) return;
+        state.editingId = id;
+
+        $("#modalTitle").textContent = "Edit Request";
+        $("#deleteBtn").style.display = "inline-flex";
+
+        $("#fSubject").value = r.subject ?? "";
+        $("#fEquipment").value = r.equipment ?? "";
+        $("#fEmployee").value = r.employee ?? "";
+        $("#fTechnician").value = r.technician ?? "";
+        $("#fCategory").value = r.category ?? "computer";
+        $("#fType").value = r.type ?? "corrective";
+        $("#fStage").value = r.stage ?? "new";
+        $("#fDue").value = r.dueDate ?? "";
+        $("#fCompany").value = r.company ?? "My company";
+        $("#fHours").value = (r.hours ?? "");
+        $("#fNotes").value = r.notes ?? "";
+
+        $("#modalBack").classList.add("open");
+        setTimeout(()=> $("#fSubject").focus(), 50);
+      }
+
+      function closeModal(){
+        $("#modalBack").classList.remove("open");
+      }
+
+      function saveModal(){
+        const payload = {
+          subject: ($("#fSubject").value || "").trim() || "Untitled request",
+          equipment: ($("#fEquipment").value || "").trim(),
+          employee: ($("#fEmployee").value || "").trim(),
+          technician: ($("#fTechnician").value || "").trim(),
+          category: $("#fCategory").value,
+          type: $("#fType").value,
+          stage: $("#fStage").value,
+          dueDate: $("#fDue").value,
+          company: ($("#fCompany").value || "").trim() || "My company",
+          hours: Number($("#fHours").value || 0),
+          notes: ($("#fNotes").value || "").trim(),
+        };
+
+        // demo: auto mark health random if missing
+        payload.health = payload.category === "mechanical" ? 35 : 70;
+
+        if(state.editingId){
+          const idx = state.requests.findIndex(x=>x.id===state.editingId);
+          if(idx >= 0){
+            state.requests[idx] = {
+              ...state.requests[idx],
+              ...payload
+            };
+            toast("Updated", "Request updated successfully.", "✅");
+          }
+        }else{
+          state.requests.unshift({
+            id: uid(),
+            createdAt: Date.now(),
+            ...payload,
+          });
+          toast("Created", "New request added to dashboard.", "✅");
+        }
+
+        persist();
+        closeModal();
+        renderAll();
+      }
+
+      function deleteEditing(){
+        const id = state.editingId;
+        if(!id) return;
+        const r = state.requests.find(x=>x.id===id);
+        if(!r) return;
+
+        if(!confirm("Delete this request?")) return;
+
+        state.requests = state.requests.filter(x=>x.id!==id);
+        toast("Deleted", "Request deleted.", "🗑️");
+
+        persist();
+        closeModal();
+        renderAll();
+        closeDrawer();
+      }
+
+      // =============================
+      // Calendar
+      // =============================
+      const DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+      function renderCalendar(){
+        // dow row
+        const dowRow = $("#dowRow");
+        dowRow.innerHTML = "";
+        DOW.forEach(d=>{
+          const x = document.createElement("div");
+          x.className = "dow";
+          x.textContent = d;
+          dowRow.appendChild(x);
+        });
+
+        const view = new Date(state.calendar.view);
+        const y = view.getFullYear();
+        const m = view.getMonth();
+        const first = new Date(y, m, 1);
+        const startDay = first.getDay();
+        const daysInMonth = new Date(y, m+1, 0).getDate();
+
+        // label
+        const monthName = view.toLocaleString(undefined, {month:"long"});
+        $("#monthLabel").textContent = `${monthName} ${y}`;
+
+        // grid
+        const grid = $("#calGrid");
+        grid.innerHTML = "";
+
+        // previous month tail
+        const prevDays = new Date(y, m, 0).getDate();
+        for(let i=0;i<startDay;i++){
+          const dayNum = prevDays - startDay + i + 1;
+          const d = new Date(y, m-1, dayNum);
+          grid.appendChild(dayCell(d, true));
+        }
+
+        // current month
+        for(let d=1; d<=daysInMonth; d++){
+          grid.appendChild(dayCell(new Date(y, m, d), false));
+        }
+
+        // next month head fill to 6 rows
+        const totalCells = grid.children.length;
+        const targetCells = (totalCells <= 35) ? 35 : 42;
+        const extra = targetCells - totalCells;
+        for(let i=1;i<=extra;i++){
+          grid.appendChild(dayCell(new Date(y, m+1, i), true));
+        }
+      }
+
+      function dayCell(dateObj, muted){
+        const el = document.createElement("div");
+        el.className = "day" + (muted ? " muted" : "");
+        el.textContent = String(dateObj.getDate());
+
+        // today
+        const today = new Date(); today.setHours(0,0,0,0);
+        const d0 = new Date(dateObj); d0.setHours(0,0,0,0);
+        if(d0.getTime() === today.getTime()){
+          el.classList.add("today");
+        }
+
+        // selected
+        const sel = new Date(state.calendar.selected); sel.setHours(0,0,0,0);
+        if(d0.getTime() === sel.getTime()){
+          el.style.borderColor = "rgba(122,167,255,.40)";
+          el.style.boxShadow = "0 0 0 4px rgba(122,167,255,.10)";
+        }
+
+        // mark if preventive scheduled
+        const iso = isoDate(d0);
+        const preventive = state.requests.filter(r => r.type==="preventive" && r.dueDate===iso);
+        const hasPrev = preventive.length > 0;
+
+        if(hasPrev){
+          const dot = document.createElement("div");
+          dot.className = "dotmark";
+          // due soon / overdue indicator for that date (relative)
+          const fakeReq = {dueDate: iso, stage: "new"};
+          if(isOverdue(fakeReq)) dot.classList.add("bad");
+          else if(isDueSoon(fakeReq)) dot.classList.add("warn");
+          el.appendChild(dot);
+        }
+
+        el.addEventListener("click", ()=>{
+          state.calendar.selected = d0;
+          renderCalendar();
+          toast("Selected date", isoDate(d0), "📅");
+        });
+
+        return el;
+      }
+
+      // =============================
+      // Toast
+      // =============================
+      let toastTimer = null;
+      function toast(title, msg, icon="✅"){
+        $("#toastIcon").textContent = icon;
+        $("#toastTitle").textContent = title;
+        $("#toastMsg").textContent = msg;
+        $("#toast").classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=> $("#toast").classList.remove("show"), 2800);
+      }
+
+      // =============================
+      // Persist + renderAll
+      // =============================
+      function persist(){
+        saveLS("gg_requests", state.requests);
+        saveLS("gg_contrast", state.themeHighContrast);
+        saveLS("gg_bg", state.bg);
+      }
+
+      function renderStats(){
+        const stats = computeStats(state.requests);
+
+        $("#statCritical").textContent = `${stats.critical} Units`;
+        $("#statLoad").textContent = `${stats.load}% Utilized`;
+        $("#statOpen").textContent = `${stats.open} Pending`;
+        $("#statOpenDesc").textContent = `${stats.overdue} Overdue`;
+
+        // spark demo data (based on counts)
+        const n = 12;
+        const base = Math.max(1, stats.open);
+        const a = Array.from({length:n}, (_,i)=> base + Math.round(Math.sin(i/2)*2 + (i%3)));
+        const b = Array.from({length:n}, (_,i)=> clamp(stats.load + Math.round(Math.cos(i/2)*4), 0, 100));
+        const c = Array.from({length:n}, (_,i)=> clamp(stats.critical + Math.round(Math.sin(i/3)*2), 0, 20));
+
+        drawSpark("sparkOpen", a);
+        drawSpark("sparkLoad", b);
+        drawSpark("sparkCritical", c);
+      }
+
+      function renderAll(){
+        updateSortIcons();
+        renderStats();
+        renderKanban();
+        renderCalendar();
+        renderTable();
+      }
+
+      // =============================
+      // Background Settings Modal
+      // =============================
+      function openBgModal(){
+        $("#bgUrl").value = state.bg.url || "";
+        $("#bgOpacity").value = String(state.bg.opacity ?? 22);
+        $("#bgOpacityLabel").textContent = `${state.bg.opacity ?? 22}%`;
+        $("#bgFile").value = "";
+        $("#bgBack").classList.add("open");
+      }
+      function closeBgModal(){ $("#bgBack").classList.remove("open"); }
+
+      function saveBgModal(){
+        const url = ($("#bgUrl").value || "").trim();
+        state.bg.url = url;
+        // keep dataUrl if uploaded; if user enters url, prefer url and clear dataUrl
+        if(url) state.bg.dataUrl = "";
+        state.bg.opacity = Number($("#bgOpacity").value || 22);
+        applyBackground();
+        persist();
+        closeBgModal();
+        toast("Background saved", "Your dashboard background is updated.", "🖼️");
+      }
+
+      function clearBg(){
+        state.bg = { url:"", dataUrl:"", opacity: 22 };
+        applyBackground();
+        persist();
+        closeBgModal();
+        toast("Background removed", "Reverted to default background.", "🧼");
+      }
+
+      // =============================
+      // Events
+      // =============================
+      // Tabs (demo)
+      $$(".tab").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          $$(".tab").forEach(b=>b.classList.remove("active"));
+          btn.classList.add("active");
+          toast("Navigation", `Clicked "${btn.textContent}" (demo)`, "🧭");
+        });
+      });
+
+      // Search + filter
+      $("#searchInput").addEventListener("input", renderAll);
+      $("#filterSelect").addEventListener("change", renderAll);
+      $("#clearSearch").addEventListener("click", ()=>{
+        $("#searchInput").value = "";
+        $("#searchInput").focus();
+        renderTable();
+      });
+      $("#resetBtn").addEventListener("click", ()=>{
+        $("#searchInput").value = "";
+        $("#filterSelect").value = "all";
+        renderAll();
+        toast("Reset", "Filters cleared.", "🧹");
+      });
+
+      // Sorting
+      $$("thead th").forEach(th=>{
+        th.addEventListener("click", ()=> setSort(th.dataset.key));
+      });
+
+      // User menu
+      const userPill = $("#userPill");
+      const userDropdown = $("#userDropdown");
+      function closeUserMenu(){
+        userDropdown.classList.remove("open");
+        userPill.setAttribute("aria-expanded","false");
+      }
+      function toggleUserMenu(){
+        userDropdown.classList.toggle("open");
+        userPill.setAttribute("aria-expanded", userDropdown.classList.contains("open") ? "true":"false");
+      }
+      userPill.addEventListener("click", toggleUserMenu);
+      userPill.addEventListener("keydown", (e)=>{
+        if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggleUserMenu(); }
+        if(e.key==="Escape") closeUserMenu();
+      });
+      document.addEventListener("click", (e)=>{
+        if(!userDropdown.contains(e.target) && !userPill.contains(e.target)) closeUserMenu();
+      });
+      $("#logoutBtn").addEventListener("click", ()=>{
+        closeUserMenu();
+        alert("Logout clicked (demo). Connect to Django logout later.");
+        // Django later:
+        // window.location.href = "{% url 'logout' %}";
+      });
+     
+      // Quick add
+      $("#quickAddBtn").addEventListener("click", ()=> openAddModal());
+      $("#closeModalBtn").addEventListener("click", closeModal);
+      $("#cancelBtn").addEventListener("click", closeModal);
+      $("#saveBtn").addEventListener("click", saveModal);
+      $("#deleteBtn").addEventListener("click", deleteEditing);
+
+      $("#modalBack").addEventListener("click", (e)=>{ if(e.target === $("#modalBack")) closeModal(); });
+
+      // Drawer
+      $("#closeDrawer").addEventListener("click", closeDrawer);
+      $("#drawerBack").addEventListener("click", closeDrawer);
+
+      // Export CSV
+      $("#exportBtn").addEventListener("click", ()=>{
+        const rows = [["Subject","Equipment","Employee","Technician","Category","Type","Stage","Due","Company","Hours","Notes"]];
+        state.requests.forEach(r=>{
+          rows.push([
+            r.subject, r.equipment, r.employee, r.technician, r.category, r.type, r.stage, r.dueDate, r.company, String(r.hours ?? ""),
+            (r.notes ?? "").replaceAll("\n"," ")
+          ]);
+        });
+        const csv = rows.map(r => r.map(cell => `"${String(cell ?? "").replaceAll('"','""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "gear-guard-dashboard.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast("Exported", "CSV file downloaded.", "⬇️");
+      });
+
+      // Refresh
+      $("#refreshBtn").addEventListener("click", ()=>{
+        const btn = $("#refreshBtn");
+        btn.style.transform = "rotate(18deg)";
+        setTimeout(()=> btn.style.transform = "", 140);
+        renderAll();
+        toast("Refreshed", "Dashboard updated.", "🔄");
+      });
+
+      // Contrast theme
+      $("#themeBtn").addEventListener("click", ()=>{
+        state.themeHighContrast = !state.themeHighContrast;
+        if(state.themeHighContrast){
+          document.documentElement.style.setProperty("--stroke","rgba(255,255,255,.16)");
+          document.documentElement.style.setProperty("--stroke2","rgba(255,255,255,.24)");
+          toast("Contrast", "High contrast enabled.", "🌙");
+        }else{
+          document.documentElement.style.setProperty("--stroke","rgba(255,255,255,.10)");
+          document.documentElement.style.setProperty("--stroke2","rgba(255,255,255,.16)");
+          toast("Contrast", "High contrast disabled.", "🌙");
+        }
+        persist();
+      });
+
+      // Reset demo data
+      $("#resetDemoBtn").addEventListener("click", ()=>{
+        if(!confirm("Reset to demo data? This will overwrite saved requests.")) return;
+        state.requests = demoSeed();
+        persist();
+        renderAll();
+        toast("Reset", "Demo data restored.", "🧪");
+      });
+
+      // Auto-assign technicians (demo)
+      $("#autoAssignBtn").addEventListener("click", ()=>{
+        const techs = ["Aka Foster","Riya Patel","Karan Mehta","Neel Shah"];
+        state.requests.forEach((r,i)=>{
+          if(!r.technician) r.technician = techs[i % techs.length];
+        });
+        persist();
+        renderAll();
+        toast("Auto Assign", "Technicians assigned (demo).", "🛠️");
+      });
+
+      // Calendar nav
+      $("#prevMonth").addEventListener("click", ()=>{
+        const v = new Date(state.calendar.view);
+        v.setMonth(v.getMonth()-1);
+        state.calendar.view = v;
+        renderCalendar();
+      });
+      $("#nextMonth").addEventListener("click", ()=>{
+        const v = new Date(state.calendar.view);
+        v.setMonth(v.getMonth()+1);
+        state.calendar.view = v;
+        renderCalendar();
+      });
+      $("#todayBtn").addEventListener("click", ()=>{
+        state.calendar.view = new Date();
+        state.calendar.selected = new Date();
+        renderCalendar();
+        toast("Calendar", "Jumped to today.", "📅");
+      });
+
+      // Schedule on selected date (creates preventive request)
+      $("#scheduleOnSelected").addEventListener("click", ()=>{
+        const dt = new Date(state.calendar.selected);
+        const due = isoDate(dt);
+        openAddModal({
+          type: "preventive",
+          stage: "new",
+          dueDate: due,
+          subject: "Preventive checkup",
+          equipment: "Equipment",
+          category: "mechanical"
+        });
+      });
+
+      // Background settings
+      $("#bgBtn").addEventListener("click", openBgModal);
+      $("#closeBgBtn").addEventListener("click", closeBgModal);
+      $("#bgCancel").addEventListener("click", closeBgModal);
+      $("#bgSave").addEventListener("click", saveBgModal);
+      $("#bgClear").addEventListener("click", clearBg);
+      $("#bgBack").addEventListener("click", (e)=>{ if(e.target === $("#bgBack")) closeBgModal(); });
+
+      $("#bgOpacity").addEventListener("input", ()=>{
+        const v = Number($("#bgOpacity").value);
+        $("#bgOpacityLabel").textContent = `${v}%`;
+      });
+
+      $("#bgFile").addEventListener("change", async ()=>{
+        const file = $("#bgFile").files?.[0];
+        if(!file) return;
+        const dataUrl = await fileToDataUrl(file);
+        state.bg.dataUrl = dataUrl;
+        state.bg.url = "";
+        applyBackground();
+        toast("Background loaded", "Image uploaded (preview). Click Save.", "🖼️");
+      });
+
+      async function fileToDataUrl(file){
+        return new Promise((resolve, reject)=>{
+          const reader = new FileReader();
+          reader.onload = ()=> resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // Toast close
+      $("#toastClose").addEventListener("click", ()=> $("#toast").classList.remove("show"));
+
+      // Keyboard escape closes modals/drawer
+      document.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape"){
+          closeUserMenu();
+          closeModal();
+          closeBgModal();
+          closeDrawer();
+        }
+      });
+
+      // =============================
+      // Init
+      // =============================
+      function init(){
+        applyBackground();
+        if(state.themeHighContrast){
+          document.documentElement.style.setProperty("--stroke","rgba(255,255,255,.16)");
+          document.documentElement.style.setProperty("--stroke2","rgba(255,255,255,.24)");
+        }
+        renderAll();
+      }
+     const djangoRequests = JSON.parse(document.getElementById("requests-data").textContent);
+
+if (djangoRequests && djangoRequests.length) {
+  state.requests = djangoRequests.map(r => ({
+    id: String(r.id),
+    subject: r.subject || "Untitled",
+    equipment: r.equipment || "",
+    employee: r.employee || "",
+    technician: r.technician || "",
+    category: r.category || "",
+    type: r.maintenance_type || "corrective",   // ✅ mapped
+    stage: r.stage || "new",
+    dueDate: r.scheduled_date || r.request_date || "", // ✅ mapped
+    company: r.company || "",
+    hours: Number(r.duration_hours || 0),       // ✅ mapped
+    notes: r.notes || "",
+    createdAt: r.request_date ? new Date(r.request_date).getTime() : Date.now(),
+    health: 70, // (optional demo)
+    priority: r.priority || "",
+  }));
+}
+
+
+init();
+
+      init();
+    </script>
+  </div>
+</body>
+</html>
